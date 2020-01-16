@@ -1,4 +1,7 @@
-# Aufgabe 2
+#Aufgabe 1: Bare Metal ausarbeiten
+Zuständigkeit: Samuel Rundel
+
+# Aufgabe 2: Dokumentation
 ## Aufgabe 2.1
 Bare Metal:
 - Context Switching
@@ -11,19 +14,44 @@ Linux:
 - Vim
 - Brauchen Performance nicht
 
-## Aufgabe 2.2
+Zuständigkeit: Patrick Sewell
 
-## Aufgabe 2.3
+## Aufgabe 2.2: Programmablauf
+Zuständigkeit: Team
+
+## Aufgabe 2.3: Kommentare
 Siehe Quellcode
+
+Zuständigkeit: Jeder, der Programmiert
 
 # Aufgabe 3: Entwicklung
 ## Aufgabe 3.1: ARM Assembler
 
+Zuständigkeit: Jeder, der Programmiert
+
 ## Aufgabe  3.2: Komponenten
 ### Colour-Wheel
-### Outlet
-### Feeder
-### Taster
+Zuständigkeit: Lisa Binkert
 
-## Aufgabe 3.3: Logik
+### Outlet
+Zuständigkeit: Samuel Rundel
+
+### Feeder
+Zuständigkeit: Nikolai Klatt
+
+### Taster
+Zuständigkeit: Nikolai Klatt
+
+### 7-Segment
+Zuständigkeit: Oliver Seiler
+
+### LED-Ansteuerung
+Zuständigkeit: Nikolai Klatt
+
+## Aufgabe 3.3
+### Logik
+Zuständigkeit: Patrick Sewell
+
+### Linken
+Zuständigkeit: Patrick Sewell
 
