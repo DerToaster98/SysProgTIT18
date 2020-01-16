@@ -1,0 +1,67 @@
+#################################################
+#												#
+#		Systemnahe Programmierung II			#
+#												#
+#################################################
+
+	Abgabe: Vermutlich 8.3.20  23:55
+
+	- 33h Zeit (Vorlesungsstunden)
+	- Hardwarenahe Programmierung (wir Programmieren eine Elektronik direkt)
+	- 5 Leute (Lisa, Niko, Olli, Patrick, Samuel)
+	- kleine Dokumentation gewollt (so nach bissl n Ablaufdiagramm oder so...)
+	- Sprache: Assembler
+	
+	Vorgehensweise:
+		- Softwareentwicklung / anderer Programmiersprachen
+		- Elektrotechnik (Basic)
+		- Digitaltechnik (Basic)
+		
+Aufgabenteilung:
+	Alle: Programmablauf (UML)
+	- Patrick: Frage: Warum nutzen wir Linux und nicht Bare Metal?, Umsetzung der Logik
+	- Samuel: Frage: Wie funktioniert auf Bare Metal?, Outlet (Der Schnorchel)
+	- Lisa: Colorwheel, 
+	- Niko: Feeder, Taster, LED Ansteuerung (Zusatz)
+	- Olli: 7 Segment Anzeige
+	
+7 Segment Anzeige:
+	-> "Methode" für inkrementieren
+	-> "Methode" für Reset (auf 0 setzen)
+	-> "Methode" welche über "Timer" die Anzeige steuert
+	-> Output definiert als 001
+ 
+Bsp.: GPIO 16 setzen: 1 an Position 16 schreiben im ersten Set Register
+
+!!Adressen für GPIOs!! Adresse im Register ist die BASIS, Offsets müssen wir selbst machen
+!!Wichtig: Broadcom BCM2835 ARM Peripherals ziehen!! 
+	
+TODO: ARM eabi installieren
+Wenns nicht für Windows gibt -> über Linux VM installieren
+		
+Aufgabenstellung:
+1) Software wahlweise auf BareMetal oder Linux implementieren
+	- Boot Vorgang nach Anlegen der Versorgungsspannung?
+	- Bare Metal System auf RPi: Wie wird es erzeugt?
+	- Unterschiede zum Bet
+		
+		
+		
+Komponenten und Aufbau:
+	Zugangsdaten über WLAN-AP der Sortiermaschine
+	- SSID: MMSortRPi
+	- PW: dhbw-RP!MMS0r7
+	- Ip RPi: 192.168.4.1
+	- User: pi
+	- Password: raspberry
+	
+Anschlüsse: Siehe Folien 
+Farberkennung: Müssen wir nicht programmieren, Co Prozessor erkennt diese, wir können es über colorBit 0-3 auslesen (Rot: 001, Green: 010, Blue: 011, Brown: 100, Orange: 101, Yellow: 110, NA: 000)
+Color LEDs: Am RPi müssen wir eine Bitfolge generieren, diese geht an die erste LED, welche dann nachdem sie ihr bit genommen hat den rest der folge weiter gibt
+			Wichtig: Folie zu diesen nochmals anschauen
+Motor Treiber: Dies sind Schrittmotoren, brauchen für jeden Schritt einen bestimmten Impuls (-> Folien)
+				Vorsichtig umgehen mit Reset und Sleep Signalen
+				Co Prozessor: 1 oder 0 setzen (0: Bremsen, 1: drehen)
+Zahlen Anzeige: Zahl wählen: via Multiplexer -> Sehr sehr schnell machen ( ~ 24 mal pro Sekunde)
+				Vorgehen: Segmente powern, dann Anzeige aktivieren
+				
