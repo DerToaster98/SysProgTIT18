@@ -1,4 +1,4 @@
-#Aufgabe 1: Bare Metal ausarbeiten
+# Aufgabe 1: Bare Metal ausarbeiten
 Zuständigkeit: Samuel Rundel
 
 # Aufgabe 2: Dokumentation
@@ -31,7 +31,7 @@ Zuständigkeit: Jeder, der Programmiert
 
 ## Aufgabe  3.2: Komponenten
 ### Urzustand
-Zuständigkeit: 
+Zuständigkeit: Team
 
 ### Colour-Wheel
 Zuständigkeit: Lisa Binkert
