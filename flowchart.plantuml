@@ -1,0 +1,26 @@
+(*) --> "Initialise machine"
+--> ===ACTIVE===
+if "Machine active?" then
+  -down->[true] "M&M enters ColourWheel"
+  --> "ColourWheel determines colour"
+  -down-> "Turn on correct LEDs"
+  --> "Turn ColourWheel"
+  if "M&M gone?" then
+    -down->[true] "Position Outlet"
+    --> "Release M&M"
+    --> "Increment counter"
+    -up-> ===ACTIVE===
+  else
+    -left->[false] "Turn ColourWheel"
+  endif
+else
+  -left->[false] ===ACTIVE===
+endif
+
+(*) --> "OnButton"
+--> "Deactivate interrupts"
+--> "Toggle machine active"
+--> "Wait 50ms"
+--> "Activate interrupts"
+--> (*)
+
