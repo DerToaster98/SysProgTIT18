@@ -30,6 +30,9 @@ Zuständigkeit: Jeder, der Programmiert
 Zuständigkeit: Jeder, der Programmiert
 
 ## Aufgabe  3.2: Komponenten
+### Urzustand
+Zuständigkeit: 
+
 ### Colour-Wheel
 Zuständigkeit: Lisa Binkert
 
