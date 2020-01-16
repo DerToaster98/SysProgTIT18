@@ -21,7 +21,7 @@ Aufgabenteilung:
 	Alle: Programmablauf (UML)
 	- Patrick: Frage: Warum nutzen wir Linux und nicht Bare Metal?, Umsetzung der Logik
 	- Samuel: Frage: Wie funktioniert auf Bare Metal?, Outlet (Der Schnorchel)
-	- Lisa: Colorwheel, 
+	- Lisa: Colorwheel
 	- Niko: Feeder, Taster, LED Ansteuerung (Zusatz)
 	- Olli: 7 Segment Anzeige
 	
