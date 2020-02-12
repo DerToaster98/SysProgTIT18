@@ -24,7 +24,7 @@
         .equ      PROT_WRITE,0x2              @ page can be written
         .equ      MAP_SHARED,0x01             @ share changes
 @ The following are defined by me:
-@        .equ      PERIPH,0x3f000000           @ RPi 2 & 3 peripherals
+@       .equ      PERIPH,0x3f000000           @ RPi 2 & 3 peripherals
         .equ      PERIPH,0x20000000           @ RPi zero & 1 peripherals
         .equ      GPIO_OFFSET,0x200000        @ start of GPIO device
         .equ      TIMERIR_OFFSET,0xB000       @ start f´of IR and timer
@@ -231,7 +231,42 @@ hw_init:
         @ b         ...
 
         @ WARNING:
-        @   call "end_of_app" if you're done with your application
+        @   call "end_of_app" if you're done with your application'
+
+        @needed GPIO:
+        @nRSTout = GPIO: 11
+        @StepOut = GPIO: 12
+        @Hall Sensor: nHallOutlet = GPIO: 20
+
+        bl turn_OutWheel
+
+turn_OutWheel:
+		@tmpreg
+		@returnreg
+
+		mov r0, #400
+loop:
+		cmp r0, r1
+		bgt done
+		str #32, [GPIOREG, #35]
+		add r0, r0, #1
+		b loop
+done:
+
+		@read Pin_Value from GPIOREG and store it in r1
+		mov	r1, [GPIOREG, #35]
+		tst r1, #32
+		@Compare value with wanted value. Value is 0, since the input is negotiaded
+		@CMP r1, #0
+		beq equal
+inequal:
+    	; print "r1 < r2" somehow
+		bl turnOutWheel
+equal:
+    	@SETUP COMPLETED
+    	JMP l1
+
+
 
 
 
