@@ -27,7 +27,7 @@
 @        .equ      PERIPH,0x3f000000           @ RPi 2 & 3 peripherals
         .equ      PERIPH,0x20000000           @ RPi zero & 1 peripherals
         .equ      GPIO_OFFSET,0x200000        @ start of GPIO device
-        .equ      TIMERIR_OFFSET,0xB000       @ start fÂ´of IR and timer
+        .equ      TIMERIR_OFFSET,0xB000       @ start f´of IR and timer
         .equ      O_FLAGS,O_RDWR|O_SYNC       @ open file flags
         .equ      PROT_RDWR,PROT_READ|PROT_WRITE
         .equ      NO_PREF,0
@@ -226,9 +226,45 @@ hw_init:
         @ HINT:
         @   configuration of inputs is not necessary cause the pins are
         @   configured as inputs after reset
+        @Initialisierung der GPIOs
+        @12 49 24 0h soll in r1 geschrieben werden
+        mov       r1,#0x12                    @Schreibe Hexwert des GPIOs Bit in r1 12h
+        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz für nächste Werte zu machen
+        mov       r1, #0x49                   @Schreibe Hexwert 49h in r1
+        orr       r2,r1,r2                   @Verordern von der Werte
+        lsl       r2,r2,#8                   @Shifte aktuellen Wert wieder um 8 Bit
+        mov       r1, #0x24                   @24h in r1
+        orr       r2,r1,r2                   @verodern von r1 und r2
+        lsl       r1,r2,#4                   @shiften von r1 um 4 Bit, damit die letzten 4 bit 0 sind
+
+        str       r1,[GPIOREG]             @Speichert den Wert r1 in GPIOREG
+
+        @1248049h soll in r1 geschrieben werden
+        mov       r1,0x12                    @Schreibe Hexwert des GPIOs Bit in r1 12h
+        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz für nächste Werte zu machen
+        mov       r1, 0x48                   @Schreibe Hexwert 48h in r1
+        orr       r2,r1,r2                   @Verordern von der Werte
+        lsl       r2,r2,#12                   @Shifte aktuellen Wert wieder um 12 Bit
+        mov       r1, 0x49                   @24h in r1
+        orr       r2,r1,r2                   @verodern von r1 und r2
+
+        str       r1,[GPIOREG,#4]                @Speichert den Wert r1 in GPIOREG mit Offset 4
+
+        @9000h soll in r1 geschrieben werden
+        mov       r1,0x9                    @Schreibe Hexwert des GPIOs Bit in r1 12h
+        lsl       r1,r1,#12                 @shifte Wert um 12 Bit weiter
+
+        str       r1,[GPIOREG,#8]           @Speichert den Wert r1 in GPIOREG mit Offset 8
+@
 
         @ TODO: BRANCH HERE TO YOUR APPLICATION CODE
         @ b         ...
+
+
+
+
+
+
 
         @ WARNING:
         @   call "end_of_app" if you're done with your application
