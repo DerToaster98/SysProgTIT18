@@ -298,13 +298,13 @@ loop:
 turn:
 		@Solange der Pin des Hallsensors 1 ist, ist der Magnet nicht vor dem Hallsensor
 		@read Pin_Value from GPIOREG and store it in r1
-		mov	r1, [GPIOREG, #55]				@
+		ldr	r1, [GPIOREG, #55]				@
 		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
 		@Compare value with wanted value. Value is 0, since the input is negotiaed
 		@CMP r1, #0
 		beq equal							@Wenn r1 = 32 -> Fehler schmei�en -> Abbruch -> Drehung fertig
 inequal:
-    	; print "r1 < r2" somehow
+    	@; print "r1 < r2" somehow
 		b end_of_app
 equal:
     	@SETUP COMPLETED
