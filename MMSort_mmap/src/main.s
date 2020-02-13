@@ -289,8 +289,10 @@ turn_OutWheel:
 loop:
 		cmp r0, r1							@Vergleicht r0 mit r1
 		bgt turn
-		str #0 , [GPIOREG, #53]							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
-		str #32, [GPIOREG, #53]
+		mov r2, #0
+		str r2 , [GPIOREG, #53]							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
+		mov r2, #32
+		str r2, [GPIOREG, #53]
 		add r0, r0, #1
 		b loop
 turn:
@@ -300,7 +302,7 @@ turn:
 		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
 		@Compare value with wanted value. Value is 0, since the input is negotiaed
 		@CMP r1, #0
-		beq equal							@Wenn r1 = 32 -> Fehler schmeißen -> Abbruch -> Drehung fertig
+		beq equal							@Wenn r1 = 32 -> Fehler schmeiï¿½en -> Abbruch -> Drehung fertig
 inequal:
     	; print "r1 < r2" somehow
 		b end_of_app
