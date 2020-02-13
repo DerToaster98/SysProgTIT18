@@ -271,9 +271,9 @@ hw_init:
 
 		@Feeder + Co-Prozessor aktivieren (output-pins entsprechend setzten)
 		mov r1, #1
-		lsl r1,#9
+		lsl r1,#8
 		add r1,r1,#1
-		lsl r1,#9
+		lsl r1,#8
 		add r1,r1,#1
 		lsl r1,#4
 
@@ -288,6 +288,10 @@ turn_OutWheel:
 
 		mov r1, #400
 		mov r0, #0
+@turn the other way round, add 0x20, [GPIOREG, #0x1C]
+@turn the other way round again: sub 0x20, [GPIOREG, #0x]
+
+
 loop:
 		CMP r0, r1							@Vergleicht r0 mit r1
 		BGT turn
