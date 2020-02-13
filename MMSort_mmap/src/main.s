@@ -277,7 +277,7 @@ hw_init:
 		add r1,r1,#1
 		lsl r1,#4
 
-		str r1, [GPIOREG, #28]
+		str r1, [GPIOREG, #0x1C]
 
 
 		bl turn_OutWheel
@@ -291,11 +291,11 @@ turn_OutWheel:
 loop:
 		CMP r0, r1							@Vergleicht r0 mit r1
 		BGT turn
-		LDR r2, [GPIOREG, #28]
+		LDR r2, [GPIOREG, #0x1C]
 		ADD r2, #0x0008
-		STR r2 , [GPIOREG, #28]					@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
+		STR r2 , [GPIOREG, #0x1C]					@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
 		SUB r2 , #0x0008
-		STR r2, [GPIOREG, #28]
+		STR r2, [GPIOREG, #0x1C]
 		ADD r0, r0, #1
 		B loop
 turn:
