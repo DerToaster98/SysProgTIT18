@@ -280,17 +280,17 @@ turn_OutWheel:
 		@tmpreg
 		@returnreg
 
-		mov r0, #400
+		mov r1, #400
 loop:
 		cmp r0, r1							@Vergleicht r0 mit r1
-		bgt done							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
+		bgt turn							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
 		str #32, [GPIOREG, #53]
 		add r0, r0, #1
 		b loop
-done:
+turn:
 		@Solange der Pin des Hallsensors 1 ist, ist der Magnet nicht vor dem Hallsensor
 		@read Pin_Value from GPIOREG and store it in r1
-		mov	r1, [GPIOREG, #35]				@#35 Wert an Pin des Outlet Hallsensors auslesen
+		mov	r1, [GPIOREG, #31]				@
 		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
 		@Compare value with wanted value. Value is 0, since the input is negotiaded
 		@CMP r1, #0
@@ -300,7 +300,7 @@ inequal:
 		JMP l1
 equal:
     	@SETUP COMPLETED
-    	bl turnOutWheel
+    	bl loop
 
 
 
