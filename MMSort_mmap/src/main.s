@@ -269,39 +269,46 @@ hw_init:
         @StepOut = GPIO: 12
         @Hall Sensor: nHallOutlet = GPIO: 20
 
-        bl turn_OutWheel
+		@Feeder + Co-Prozessor aktivieren (output-pins entsprechend setzten)
+		mov r1, #1
+		lsl r1,r1,#8
+		add r1,r1,#1
+		lsl r1,r1,#4
+
+		str r1, [GPIOREG, #28]
+
+
+		bl turn_OutWheel
 
 turn_OutWheel:
 		@tmpreg
 		@returnreg
 
 		mov r1, #400
+		mov r0, #0
 loop:
 		cmp r0, r1							@Vergleicht r0 mit r1
 		bgt turn
-		mov r2,#0
-		str r2 , [GPIOREG, #53]					@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
-		mov r2,#32
-		str r2, [GPIOREG, #53]
+		str #0 , [GPIOREG, #53]							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
+		str #32, [GPIOREG, #53]
 		add r0, r0, #1
 		b loop
 turn:
 		@Solange der Pin des Hallsensors 1 ist, ist der Magnet nicht vor dem Hallsensor
 		@read Pin_Value from GPIOREG and store it in r1
-		ldr	r1, [GPIOREG, #31]				@
+		mov	r1, [GPIOREG, #55]				@
 		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
-		@Compare value with wanted value. Value is 0, since the input is negotiaded
+		@Compare value with wanted value. Value is 0, since the input is negotiaed
 		@CMP r1, #0
-		beq equal							@Wenn r1 = 32 -> Fehler schmeiï¿½en -> Abbruch -> Drehung fertig
+		beq equal							@Wenn r1 = 32 -> Fehler schmeißen -> Abbruch -> Drehung fertig
 inequal:
-    	@; print "r1 < r2" somehow
-		  b end_of_app
+    	; print "r1 < r2" somehow
+		b end_of_app
 equal:
     	@SETUP COMPLETED
     	bl loop
 
-
-
+b end_of_app
 
 
 @ --------------------------------------------------------------------------------------------------------------------
