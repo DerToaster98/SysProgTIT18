@@ -1,4 +1,4 @@
-Components:
+## Components:
 - Colour-Wheel
   - Set GPIO1[367] to output
   - Set GPIO20 to input
@@ -21,7 +21,7 @@ Components:
 - LEDs
   - Use WS2812B library
 
-Execution order:
+## Execution order:
 - Init GPIOs
 - while active:
   - while GPIO25 == Nothing
@@ -33,7 +33,7 @@ Execution order:
     - Set GPIO1[35] = turn
   - Set GPIO1[35] = stop
 
-Pseudoassembly:
+## Pseudoassembly:
 
 ```arm
 outlet_pos = 0
@@ -84,7 +84,7 @@ detect_colour:
   b main
 ```    
 
-Functions:
+## Functions:
   - init\_gpio: @ Done
     - Configures the GPIO-Pins
   - init\_outlet: @ Samuel Rundel
