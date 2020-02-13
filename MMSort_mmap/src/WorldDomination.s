@@ -284,7 +284,7 @@ turn_OutWheel:
 loop:
 		cmp r0, r1							@Vergleicht r0 mit r1
 		bgt done							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
-		str #32, [GPIOREG, #35]
+		str #32, [GPIOREG, #53]
 		add r0, r0, #1
 		b loop
 done:
