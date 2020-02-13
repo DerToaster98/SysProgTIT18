@@ -273,6 +273,8 @@ hw_init:
 		mov r1, #1
 		lsl r1,r1,#8
 		add r1,r1,#1
+		lsl r1,r1,#8
+		add r1,r1,#1
 		lsl r1,r1,#4
 
 		str r1, [GPIOREG, #28]
