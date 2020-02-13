@@ -250,7 +250,7 @@ hw_init:
 
         str       r1,[GPIOREG,#4]                @Speichert den Wert r1 in GPIOREG mit Offset 4
 
-        @9000h soll in r1 geschrieben werden
+         @9000h soll in r1 geschrieben werden
         mov       r1,0x9                    @Schreibe Hexwert des GPIOs Bit in r1 12h
         lsl       r1,r1,#12                 @shifte Wert um 12 Bit weiter
 
@@ -267,8 +267,41 @@ hw_init:
 
 
         @ WARNING:
-        @   call "end_of_app" if you're done with your application
+        @   call "end_of_app" if you're done with your application'
 
+        @needed GPIO:
+        @nRSTout = GPIO: 11
+        @StepOut = GPIO: 12
+        @Hall Sensor: nHallOutlet = GPIO: 20
+
+        bl turn_OutWheel
+
+turn_OutWheel:
+		@tmpreg
+		@returnreg
+
+		mov r1, #400
+loop:
+		cmp r0, r1							@Vergleicht r0 mit r1
+		bgt turn
+		str #0 , [GPIOREG, #53]							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
+		str #32, [GPIOREG, #53]
+		add r0, r0, #1
+		b loop
+turn:
+		@Solange der Pin des Hallsensors 1 ist, ist der Magnet nicht vor dem Hallsensor
+		@read Pin_Value from GPIOREG and store it in r1
+		mov	r1, [GPIOREG, #31]				@
+		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
+		@Compare value with wanted value. Value is 0, since the input is negotiaded
+		@CMP r1, #0
+		beq equal							@Wenn r1 = 32 -> Fehler schmeißen -> Abbruch -> Drehung fertig
+inequal:
+    	; print "r1 < r2" somehow
+		JMP l1
+equal:
+    	@SETUP COMPLETED
+    	bl loop
 
 
 @ --------------------------------------------------------------------------------------------------------------------
