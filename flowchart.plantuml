@@ -1,3 +1,4 @@
+@startuml
 (*) --> "Initialise machine"
 --> ===ACTIVE===
 if "Machine active?" then
@@ -23,4 +24,5 @@ endif
 --> "Wait 50ms"
 --> "Activate interrupts"
 --> (*)
+@enduml
 
