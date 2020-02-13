@@ -40,47 +40,75 @@ outlet_pos = 0
 mm_count = 0
 active = 0
 
+@ ---
+
+interrupt_onButton: @ Nikolai Klatt
+
+  @ Disable interrupts
+  
+  ldr r1, active @ If active: turn_off
+  cmp r1, #0     @ Else: turn_on
+  bgt turn_on
+  
+turn_off:
+  mov r1, #0 @ Set active and mm_counter to 0
+  str r1, active
+  str r1, mm_count
+  
+  bl turn_off_counter
+  
+  b exit
+
+turn_on:
+  mov r1, #1 @ Set active to 1
+  str r1, active
+  
+  bl turn_on_counter
+
+exit:
+  @ Enable interrupts
+
+@ ---
+
 init:
   bl init_gpio
   bl init_outlet
 
-interrupt_onButton: @ Nikolai Klatt
-  @ Disable interrupts
-  ldr r1, active
-  cmp r1, #0
-  bgt turn_on
-  b exit
-  mov r1, #0
-  str r1, active
-  str r1, mm_count
-  bl turn_off_counter
-turn_on:
-  mov r1, #1
-  str r1, active
-  bl turn_on_counter
-exit:
-  @ Enable interrupts
+@ ---
 
 main:
-  teq ACTIVEREG, #0 
+  ldr r1, active @ While not active: pass
+  teq r1, #0 
   beq main
+  
   bl position_colour_wheel
-  mov r1, #1
+  
+  mov r1, #1 @ Turn feeder on
   bl turn_feeder
+  
 fetch_mm:
-  bl check_mm_in_wheel
+  bl check_mm_in_wheel @ Until mm in feeder: pass
   teq RETREG, #1
   beq detect_colour
   b fetch_mm
+  
 detect_colour:
-  mov r1, #0
+  mov r1, #0 @ Turn feeder off
   bl turn_feeder
+  
+  mov r1, INVALID_COLOUR @ Do: get_colour While colour is invalid
+detect_colour_loop:
   bl get_colour
   mov r1, RETREG
+  teq r1, INVALID_COLOUR
+  beq detect_colour_loop
+  
   bl light_led
   bl move_outlet
   bl spitout_mm
+  
   bl increment_counter
+  
   b main
 ```    
 
