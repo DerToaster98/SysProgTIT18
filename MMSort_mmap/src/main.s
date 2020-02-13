@@ -271,11 +271,11 @@ hw_init:
 
 		@Feeder + Co-Prozessor aktivieren (output-pins entsprechend setzten)
 		mov r1, #1
-		lsl r1,r1,#8
+		lsl r1,#9
 		add r1,r1,#1
-		lsl r1,r1,#8
+		lsl r1,#9
 		add r1,r1,#1
-		lsl r1,r1,#4
+		lsl r1,#4
 
 		str r1, [GPIOREG, #28]
 
@@ -289,18 +289,19 @@ turn_OutWheel:
 		mov r1, #400
 		mov r0, #0
 loop:
-		cmp r0, r1							@Vergleicht r0 mit r1
-		bgt turn
-		mov r2, #0
-		str r2 , [GPIOREG, #53]							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
-		mov r2, #32
-		str r2, [GPIOREG, #53]
-		add r0, r0, #1
-		b loop
+		CMP r0, r1							@Vergleicht r0 mit r1
+		BGT turn
+		LDR r2, [GPIOREG, #28]
+		ADD r2, #0x0008
+		STR r2 , [GPIOREG, #28]					@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
+		SUB r2 , #0x0008
+		STR r2, [GPIOREG, #28]
+		ADD r0, r0, #1
+		B loop
 turn:
 		@Solange der Pin des Hallsensors 1 ist, ist der Magnet nicht vor dem Hallsensor
 		@read Pin_Value from GPIOREG and store it in r1
-		ldr	r1, [GPIOREG, #55]				@
+		ldr	r1, [GPIOREG, #54]				@
 		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
 		@Compare value with wanted value. Value is 0, since the input is negotiaed
 		@CMP r1, #0
