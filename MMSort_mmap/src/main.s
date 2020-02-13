@@ -24,10 +24,10 @@
         .equ      PROT_WRITE,0x2              @ page can be written
         .equ      MAP_SHARED,0x01             @ share changes
 @ The following are defined by me:
-@        .equ      PERIPH,0x3f000000           @ RPi 2 & 3 peripherals
+@       .equ      PERIPH,0x3f000000           @ RPi 2 & 3 peripherals
         .equ      PERIPH,0x20000000           @ RPi zero & 1 peripherals
         .equ      GPIO_OFFSET,0x200000        @ start of GPIO device
-        .equ      TIMERIR_OFFSET,0xB000       @ start f´of IR and timer
+        .equ      TIMERIR_OFFSET,0xB000       @ start f�of IR and timer
         .equ      O_FLAGS,O_RDWR|O_SYNC       @ open file flags
         .equ      PROT_RDWR,PROT_READ|PROT_WRITE
         .equ      NO_PREF,0
@@ -229,7 +229,7 @@ hw_init:
         @Initialisierung der GPIOs
         @12 49 24 0h soll in r1 geschrieben werden
         mov       r1,#0x12                    @Schreibe Hexwert des GPIOs Bit in r1 12h
-        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz für nächste Werte zu machen
+        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz f�r n�chste Werte zu machen
         mov       r1, #0x49                   @Schreibe Hexwert 49h in r1
         orr       r2,r1,r2                   @Verordern von der Werte
         lsl       r2,r2,#8                   @Shifte aktuellen Wert wieder um 8 Bit
@@ -240,18 +240,18 @@ hw_init:
         str       r1,[GPIOREG]             @Speichert den Wert r1 in GPIOREG
 
         @1248049h soll in r1 geschrieben werden
-        mov       r1,0x12                    @Schreibe Hexwert des GPIOs Bit in r1 12h
-        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz für nächste Werte zu machen
-        mov       r1, 0x48                   @Schreibe Hexwert 48h in r1
+        mov       r1,#0x12                    @Schreibe Hexwert des GPIOs Bit in r1 12h
+        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz f�r n�chste Werte zu machen
+        mov       r1, #0x48                   @Schreibe Hexwert 48h in r1
         orr       r2,r1,r2                   @Verordern von der Werte
         lsl       r2,r2,#12                   @Shifte aktuellen Wert wieder um 12 Bit
-        mov       r1, 0x49                   @24h in r1
+        mov       r1, #0x49                   @24h in r1
         orr       r2,r1,r2                   @verodern von r1 und r2
 
         str       r1,[GPIOREG,#4]                @Speichert den Wert r1 in GPIOREG mit Offset 4
 
-         @9000h soll in r1 geschrieben werden
-        mov       r1,0x9                    @Schreibe Hexwert des GPIOs Bit in r1 12h
+        @9000h soll in r1 geschrieben werden
+        mov       r1,#0x9                    @Schreibe Hexwert des GPIOs Bit in r1 12h
         lsl       r1,r1,#12                 @shifte Wert um 12 Bit weiter
 
         str       r1,[GPIOREG,#8]           @Speichert den Wert r1 in GPIOREG mit Offset 8
@@ -259,11 +259,6 @@ hw_init:
 
         @ TODO: BRANCH HERE TO YOUR APPLICATION CODE
         @ b         ...
-
-
-
-
-
 
 
         @ WARNING:
@@ -284,24 +279,29 @@ turn_OutWheel:
 loop:
 		cmp r0, r1							@Vergleicht r0 mit r1
 		bgt turn
-		str #0 , [GPIOREG, #53]							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
-		str #32, [GPIOREG, #53]
+		mov r2,#0
+		str r2 , [GPIOREG, #53]					@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
+		mov r2,#32
+		str r2, [GPIOREG, #53]
 		add r0, r0, #1
 		b loop
 turn:
 		@Solange der Pin des Hallsensors 1 ist, ist der Magnet nicht vor dem Hallsensor
 		@read Pin_Value from GPIOREG and store it in r1
-		mov	r1, [GPIOREG, #31]				@
+		ldr	r1, [GPIOREG, #31]				@
 		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
 		@Compare value with wanted value. Value is 0, since the input is negotiaded
 		@CMP r1, #0
-		beq equal							@Wenn r1 = 32 -> Fehler schmei�en -> Abbruch -> Drehung fertig
+		beq equal							@Wenn r1 = 32 -> Fehler schmei�en -> Abbruch -> Drehung fertig
 inequal:
-    	; print "r1 < r2" somehow
-		JMP l1
+    	@; print "r1 < r2" somehow
+		  b end_of_app
 equal:
     	@SETUP COMPLETED
     	bl loop
+
+
+
 
 
 @ --------------------------------------------------------------------------------------------------------------------
