@@ -283,7 +283,7 @@ hw_init:
         orr r1, #0x00080000
         str r1, [GPIOREG, #0x1C]
 
-        mov r1, #0x00003000     @ Sets Outlet RST and Outlet Step
+        mov r1, #0x00000800     @ Sets Outlet RST and Outlet Step
         str r1, [GPIOREG, #0x1C]
         ldr r0, =OutroMsg
         bl  printf
