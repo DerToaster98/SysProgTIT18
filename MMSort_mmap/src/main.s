@@ -285,8 +285,6 @@ hw_init:
 
         mov r1, #0x00000800     @ Sets Outlet RST and Outlet Step
         str r1, [GPIOREG, #0x1C]
-        ldr r0, =OutroMsg
-        bl  printf
         b turn_OutWheel
 
 turn_OutWheel:
