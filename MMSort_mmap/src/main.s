@@ -39,7 +39,7 @@
         .equ    yellow, 67
         .equ    green, 134
         .equ    blue, 200
-        .equ    red, 267
+        .equ    red, 268
         .equ    brown, 334
         .equ    orange, 0
 
