@@ -312,7 +312,7 @@ loop_cw:
 turn_out_wheel:
 		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
 		mov r0, #0                @ r0 = i; r1 = 400
-loop:
+loop_out_wheel:
 		mov r2, #0x00001000       @ Falling edge
 		str r2, [GPIOREG, #0x1C]
 		mov r2, #0x00001000       @ Rising edge
@@ -320,12 +320,12 @@ loop:
 		add r0, r0, #1            @ ++i
 		cmp r0, r1                @ i <= 400, else break
 		bgt turn
-		b loop
+		b loop_out_wheel
 turn:
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
 		tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
 		beq end_of_app            @ Hall sensor doesn't have an object
-        b loop
+        b loop_out_wheel
 
 @ --------------------------------------------------------------------------------------------------------------------
 @
