@@ -288,18 +288,15 @@ hw_init:
         @ TODO: BRANCH HERE TO YOUR APPLICATION CODE
         @ b         ...
 
-
         @ WARNING:
         @   call "end_of_app" if you're done with your application'
 
-        @needed GPIO:
-        @nRSTout = GPIO: 11
-        @StepOut = GPIO: 12
-        @Hall Sensor: nHallOutlet = GPIO: 21
-
         @ Used GPIOs:
-        @   19 (Feeder),
-        @   27 (Co-Processor Sleep)
+        @   11 (Outlet RST) OUTPUT
+        @   12 (Outlet Step) OUTPUT
+        @   19 (Feeder) OUTPUT
+        @   21 (Outlet Hall) INPUT
+        @   27 (Co-Processor Sleep) OUTPUT
         mov r1, #0x08080000    @ Sets Co-Processor Sleep and Feeder to activate turning the feeder
         str r1, [GPIOREG, #0x1C]
 
@@ -325,7 +322,6 @@ turn:
 		tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
 		beq end_of_app            @ Hall sensor doesn't have an object
                 b loop
-
 
 @ --------------------------------------------------------------------------------------------------------------------
 @
