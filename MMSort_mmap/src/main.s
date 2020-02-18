@@ -279,13 +279,31 @@ hw_init:
         @   19 (Feeder) OUTPUT
         @   21 (Outlet Hall) INPUT
         @   27 (Co-Processor Sleep) OUTPUT
+        @Turn on feeder
         mov r1, #0x08000000    @ Sets Co-Processor Sleep and Feeder to activate turning the feeder
         orr r1, #0x00080000
         str r1, [GPIOREG, #0x1C]
 
         mov r1, #0x00000800     @ Sets Outlet RST and Outlet Step
         str r1, [GPIOREG, #0x1C]
-        b turn_OutWheel
+        @b turn_OutWheel
+        b turn_color_wheel
+
+turn_color_wheel:
+		mov r1, #1
+		str r1, [GPIOREG, #0x11]	@Color Wheel RST
+		str r1, [GPIOREG, #0x10]		@Color Wheel DIR
+		mov r1, #400
+
+loop_cw:
+		mov r2, #1
+		str r2, [GPIOREG, #0xD]
+		mov r2, #0
+		str r2, [GPIOREG, #0xD]
+		dec r1
+		tst r1, #0
+		beq	turn_outWheel
+		b loop_cw
 
 turn_OutWheel:
 		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
@@ -325,6 +343,12 @@ timerIR:
 @
 @ --------------------------------------------------------------------------------------------------------------------
 end_of_app:
+		@turn off feeder
+		mov r1, #0x08000000    @ Resets Co-Processor Sleep and Feeder to deactivate turning the feeder
+        orr r1, #0x00080000
+        str r1, [GPIOREG, #0x28]
+
+		@Mr Kleins stuff
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       r0, [r1]                    @ memory to unmap
         mov       r1, #PAGE_SIZE              @ amount we mapped
