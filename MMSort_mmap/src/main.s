@@ -61,6 +61,8 @@ memMsgTimerIR:
 
 IntroMsg:
         .asciz    "Welcome to the MM-Sorting-Machine!\n"
+OutroMsg:
+        .asciz    "Test"
 
         .balign   4
 gpio_mmap_adr:
@@ -244,46 +246,26 @@ hw_init:
         @   19 (Feeder),
         @   26 (Outlet Direction),
         @   27 (Co-Processor Sleep)
-        @ GPFSEL0: Mask:  07077777700 = 0x38FFFFC0
-        @          Value: 00011111100 = 0x00249240
-        @ GPFSEL1: Mask:  07077007770 = 0x071F81FF
-        @          Value: 01011001110 = 0x08240248
-        @ GPFSEL2: Mask:  00077707777 = 0x00FF8FFF
-        @          Value: 00011000000 = 0x00240000
+        @ GPFSEL0: Value: 00011111100 = 0x00249240
+        @ GPFSEL1: Value: 01011001110 = 0x08240248
+        @ GPFSEL2: Value: 00011000000 = 0x00240000
 
         @ Set GPFSEL0
-        ldr r1, [GPIOREG]  @ r1: Current configuration
-        mov r2, #0x38000000 @ r2: Bitmask
-        orr r2, #0x00FF0000
-        orr r2, #0x0000FF00
-        orr r2, #0x000000C0
         mov r3, #0x00240000 @ r3: New configuration
         orr r3, #0x00009200
         orr r3, #0x00000040
-        and r1, r2, r3     @ Combine Bitmask and configuration, in order to
-        str r1, [GPIOREG]  @ not unneccessarily override existing configuration
+        str r3, [GPIOREG]  @ not unneccessarily override existing configuration
 
         @ Set GPFSEL1
-        ldr r1, [GPIOREG, #4]  @ r1: Current configuration
-        mov r2, #0x07000000     @ r2: Bitmask
-        orr r2, #0x001F0000
-        orr r3, #0x00008100
-        orr r3, #0x000000FF
         mov r3, #0x08000000     @ r3: New configuration
         orr r3, #0x00240000
         orr r3, #0x00000200
         orr r3, #0x00000048
-        and r1, r2, r3
-        str r1, [GPIOREG, #4]
+        str r3, [GPIOREG, #4]
 
         @ Set GPFSEL2
-        ldr r1, [GPIOREG, #8]  @ r1: Current configuration
-        mov r2, #0x00FF0000     @ r2: Bitmask
-        orr r2, #0x00008F00
-        orr r2, #0x000000FF
         mov r3, #0x00240000     @ r3: New configuration
-        and r1, r2, r3    
-        str r1, [GPIOREG, #8]
+        str r3, [GPIOREG, #8]
         
         @ TODO: BRANCH HERE TO YOUR APPLICATION CODE
         @ b         ...
@@ -297,12 +279,14 @@ hw_init:
         @   19 (Feeder) OUTPUT
         @   21 (Outlet Hall) INPUT
         @   27 (Co-Processor Sleep) OUTPUT
-        mov r1, #0x08080000    @ Sets Co-Processor Sleep and Feeder to activate turning the feeder
+        mov r1, #0x08000000    @ Sets Co-Processor Sleep and Feeder to activate turning the feeder
+        orr r1, #0x00080000
         str r1, [GPIOREG, #0x1C]
 
         mov r1, #0x00003000     @ Sets Outlet RST and Outlet Step
         str r1, [GPIOREG, #0x1C]
-
+        ldr r0, =OutroMsg
+        bl  printf
         b turn_OutWheel
 
 turn_OutWheel:
