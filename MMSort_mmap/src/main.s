@@ -226,37 +226,65 @@ hw_init:
         @ HINT:
         @   configuration of inputs is not necessary cause the pins are
         @   configured as inputs after reset
-        @Initialisierung der GPIOs
-        @12 49 24 0h soll in r1 geschrieben werden
-        mov       r1,#0x12                    @Schreibe Hexwert des GPIOs Bit in r1 12h
-        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz f�r n�chste Werte zu machen
-        mov       r1, #0x49                   @Schreibe Hexwert 49h in r1
-        orr       r2,r1,r2                   @Verordern von der Werte
-        lsl       r2,r2,#8                   @Shifte aktuellen Wert wieder um 8 Bit
-        mov       r1, #0x24                   @24h in r1
-        orr       r2,r1,r2                   @verodern von r1 und r2
-        lsl       r1,r2,#4                   @shiften von r1 um 4 Bit, damit die letzten 4 bit 0 sind
 
-        str       r1,[GPIOREG]             @Speichert den Wert r1 in GPIOREG
+        @ GPIO CONFIGURATION
+        @ Input:
+        @   9 (Mittlerer Taster),
+        @   20 (Colour Wheel Hall),
+        @   21 (Outlet Hall),
+        @   22 - 23 (Farberkennung),
+        @   25 (Objektsensor)
+        @ Output:
+        @   2 - 7 (Output),
+        @   11 (Outlet RST),
+        @   12 (Outlet Step),
+        @   13 (Colour Wheel Step),
+        @   16 (Colour Wheel Direction),
+        @   17 (Colour Wheel RST),
+        @   19 (Feeder),
+        @   26 (Outlet Direction),
+        @   27 (Co-Processor Sleep)
+        @ GPFSEL0: Mask:  07077777700 = 0x38FFFFC0
+        @          Value: 00011111100 = 0x00249240
+        @ GPFSEL1: Mask:  07077007770 = 0x071F81FF
+        @          Value: 01011001110 = 0x08240248
+        @ GPFSEL2: Mask:  00077707777 = 0x00FF8FFF
+        @          Value: 00011000000 = 0x00240000
 
-        @1248049h soll in r1 geschrieben werden
-        mov       r1,#0x12                    @Schreibe Hexwert des GPIOs Bit in r1 12h
-        lsl       r2,r1,#8                   @shifte Wert um 8 Bit weiter, um Platz f�r n�chste Werte zu machen
-        mov       r1, #0x48                   @Schreibe Hexwert 48h in r1
-        orr       r2,r1,r2                   @Verordern von der Werte
-        lsl       r2,r2,#12                   @Shifte aktuellen Wert wieder um 12 Bit
-        mov       r1, #0x49                   @24h in r1
-        orr       r2,r1,r2                   @verodern von r1 und r2
+        @ Set GPFSEL0
+        ldr r1, [GPIOREG]  @ r1: Current configuration
+        mov r2, #0x38000000 @ r2: Bitmask
+        orr r2, #0x00FF0000
+        orr r2, #0x0000FF00
+        orr r2, #0x000000C0
+        mov r3, #0x00240000 @ r3: New configuration
+        orr r3, #0x00009200
+        orr r3, #0x00000040
+        and r1, r2, r3     @ Combine Bitmask and configuration, in order to
+        str r1, [GPIOREG]  @ not unneccessarily override existing configuration
 
-        str       r1,[GPIOREG,#4]                @Speichert den Wert r1 in GPIOREG mit Offset 4
+        @ Set GPFSEL1
+        ldr r1, [GPIOREG, #4]  @ r1: Current configuration
+        mov r2, #0x07000000     @ r2: Bitmask
+        orr r2, #0x001F0000
+        orr r3, #0x00008100
+        orr r3, #0x000000FF
+        mov r3, #0x08000000     @ r3: New configuration
+        orr r3, #0x00240000
+        orr r3, #0x00000200
+        orr r3, #0x00000048
+        and r1, r2, r3
+        str r1, [GPIOREG, #4]
 
-        @9000h soll in r1 geschrieben werden
-        mov       r1,#0x9                    @Schreibe Hexwert des GPIOs Bit in r1 12h
-        lsl       r1,r1,#12                 @shifte Wert um 12 Bit weiter
-
-        str       r1,[GPIOREG,#8]           @Speichert den Wert r1 in GPIOREG mit Offset 8
-@
-
+        @ Set GPFSEL2
+        ldr r1, [GPIOREG, #8]  @ r1: Current configuration
+        mov r2, #0x00FF0000     @ r2: Bitmask
+        orr r2, #0x00008F00
+        orr r2, #0x000000FF
+        mov r3, #0x00240000     @ r3: New configuration
+        and r1, r2, r3    
+        str r1, [GPIOREG, #8]
+        
         @ TODO: BRANCH HERE TO YOUR APPLICATION CODE
         @ b         ...
 
@@ -267,52 +295,36 @@ hw_init:
         @needed GPIO:
         @nRSTout = GPIO: 11
         @StepOut = GPIO: 12
-        @Hall Sensor: nHallOutlet = GPIO: 20
+        @Hall Sensor: nHallOutlet = GPIO: 21
 
-		@Feeder + Co-Prozessor aktivieren (output-pins entsprechend setzten)
-		mov r1, #1
-		lsl r1,r1,#8
-		add r1,r1,#1
-		lsl r1,r1,#8
-		add r1,r1,#1
-		lsl r1,r1,#4
+        @ Used GPIOs:
+        @   19 (Feeder),
+        @   27 (Co-Processor Sleep)
+        mov r1, #0x08080000    @ Sets Co-Processor Sleep and Feeder to activate turning the feeder
+        str r1, [GPIOREG, #0x1C]
 
-		str r1, [GPIOREG, #28]
+        mov r1, #0x00003000     @ Sets Outlet RST and Outlet Step
+        str r1, [GPIOREG, #0x1C]
 
-
-		bl turn_OutWheel
+        b turn_OutWheel
 
 turn_OutWheel:
-		@tmpreg
-		@returnreg
-
-		mov r1, #400
-		mov r0, #0
+		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
+		mov r0, #0                @ r0 = i; r1 = 400
 loop:
-		cmp r0, r1							@Vergleicht r0 mit r1
+		mov r2, #0x00000000       @ Falling edge
+		str r2, [GPIOREG, #0x1C]
+		mov r2, #0x00001000       @ Rising edge
+		str r2, [GPIOREG, #0x1C]
+		add r0, r0, #1            @ ++i
+		cmp r0, r1                @ i <= 400, else break
 		bgt turn
-		mov r2, #0
-		str r2 , [GPIOREG, #53]							@Wenn r0 > r1 -> Absprung in Done --> Drehung ist durch ?
-		mov r2, #32
-		str r2, [GPIOREG, #53]
-		add r0, r0, #1
 		b loop
 turn:
-		@Solange der Pin des Hallsensors 1 ist, ist der Magnet nicht vor dem Hallsensor
-		@read Pin_Value from GPIOREG and store it in r1
-		ldr	r1, [GPIOREG, #55]				@
-		tst r1, #32							@#32 Ist der Wert des Outlet des Hallsensors
-		@Compare value with wanted value. Value is 0, since the input is negotiaed
-		@CMP r1, #0
-		beq equal							@Wenn r1 = 32 -> Fehler schmei�en -> Abbruch -> Drehung fertig
-inequal:
-    	@; print "r1 < r2" somehow
-		b end_of_app
-equal:
-    	@SETUP COMPLETED
-    	bl loop
-
-b end_of_app
+                ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+		tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
+		beq end_of_app            @ Hall sensor doesn't have an object
+                b loop
 
 
 @ --------------------------------------------------------------------------------------------------------------------
