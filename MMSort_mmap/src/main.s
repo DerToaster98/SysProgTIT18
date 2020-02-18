@@ -302,7 +302,7 @@ loop_cw:
 		str r2, [GPIOREG, #0x1C]
 		mov r2, #0x02000
 		@Reset
-		str r2, [GPIOREG, #0x28
+		str r2, [GPIOREG, #0x28]
 
 		sub r1, #1
 		tst r1, #0
