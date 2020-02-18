@@ -292,7 +292,6 @@ hw_init:
 turn_color_wheel:
 		mov r1, #0x30000
 		str r1, [GPIOREG, #0x1C]		@Color Wheel RST
-		str r1, [GPIOREG, #0x10]		@Color Wheel DIR
 		mov r1, #400
 
 loop_cw:
@@ -305,7 +304,7 @@ loop_cw:
 		str r2, [GPIOREG, #0x28]
 
 		sub r1, #1
-		tst r1, #0
+		cmp r1, #0
 		beq	turn_out_wheel
 		b loop_cw
 
