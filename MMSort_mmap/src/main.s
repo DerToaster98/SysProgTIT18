@@ -304,8 +304,6 @@ loop_cw:
 		@Reset
 		str r2, [GPIOREG, #0x28
 
-		@
-
 		sub r1, #1
 		tst r1, #0
 		beq	turn_out_wheel
