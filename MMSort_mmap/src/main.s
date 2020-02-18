@@ -296,10 +296,16 @@ turn_color_wheel:
 		mov r1, #400
 
 loop_cw:
-		mov r2, #0x32000
+		@13. Bit setzen und resetten -> Color Wheel Step
+		mov r2, #0x02000
+		@Setzen
 		str r2, [GPIOREG, #0x1C]
-		mov r2, #0
-		str r2, [GPIOREG, #0x1C]
+		mov r2, #0x02000
+		@Reset
+		str r2, [GPIOREG, #0x28
+
+		@
+
 		sub r1, #1
 		tst r1, #0
 		beq	turn_out_wheel
@@ -309,10 +315,10 @@ turn_out_wheel:
 		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
 		mov r0, #0                @ r0 = i; r1 = 400
 loop:
-		mov r2, #0x00000000       @ Falling edge
+		mov r2, #0x00001000       @ Falling edge
 		str r2, [GPIOREG, #0x1C]
 		mov r2, #0x00001000       @ Rising edge
-		str r2, [GPIOREG, #0x1C]
+		str r2, [GPIOREG, #0x28]
 		add r0, r0, #1            @ ++i
 		cmp r0, r1                @ i <= 400, else break
 		bgt turn
