@@ -290,22 +290,22 @@ hw_init:
         b turn_color_wheel
 
 turn_color_wheel:
-		mov r1, #1
-		str r1, [GPIOREG, #0x11]	@Color Wheel RST
+		mov r1, #0x30000
+		str r1, [GPIOREG, #0x1C]		@Color Wheel RST
 		str r1, [GPIOREG, #0x10]		@Color Wheel DIR
 		mov r1, #400
 
 loop_cw:
-		mov r2, #1
-		str r2, [GPIOREG, #0xD]
+		mov r2, #0x32000
+		str r2, [GPIOREG, #0x1C]
 		mov r2, #0
-		str r2, [GPIOREG, #0xD]
-		dec r1
+		str r2, [GPIOREG, #0x1C]
+		sub r1, #1
 		tst r1, #0
-		beq	turn_outWheel
+		beq	turn_out_wheel
 		b loop_cw
 
-turn_OutWheel:
+turn_out_wheel:
 		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
 		mov r0, #0                @ r0 = i; r1 = 400
 loop:
@@ -318,10 +318,10 @@ loop:
 		bgt turn
 		b loop
 turn:
-                ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
 		tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
 		beq end_of_app            @ Hall sensor doesn't have an object
-                b loop
+        b loop
 
 @ --------------------------------------------------------------------------------------------------------------------
 @
