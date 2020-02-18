@@ -36,6 +36,15 @@
         .equ      DEVICE_ARG,4                @ device address
         .equ      STACK_ARGS,8                @ sp already 8-byte aligned
 
+        .equ    yellow, 67
+        .equ    green, 134
+        .equ    blue, 200
+        .equ    red, 267
+        .equ    brown, 334
+        .equ    orange, 0
+
+
+SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
 WAITREG .req      r8
@@ -308,6 +317,8 @@ loop_cw:
 		beq	turn_out_wheel
 		b loop_cw
 
+        @b logik_af
+
 turn_out_wheel:
 		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
 		mov r0, #0                @ r0 = i; r1 = 400
@@ -325,6 +336,28 @@ turn:
  	tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
  	beq end_of_app            @ Hall sensor doesn't have an object
         b loop_out_wheel
+
+logik_af:
+        mov r1, #green @ test
+        cmp SNORKEL, r1
+        beq logic_end
+        bgt logic_backwards
+        blt logic_forwards
+
+logic_backwards:
+        sub r1, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl turn_out_wheel
+        b logic_end
+
+logic_forwards:
+        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl turn_out_wheel
+        b logic_end
+
+logic_end:
+        b end_of_app
+
+
 
 @ --------------------------------------------------------------------------------------------------------------------
 @
