@@ -44,8 +44,7 @@
         .equ    orange, 0
 
 
-SNORKEL .req      r4         @ current position of the snorkel 
-SNORKEL_PROP .req r7   @ needed position of the snorkel
+SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
 WAITREG .req      r8
@@ -323,8 +322,6 @@ loop_cw:
 
 turn_out_wheel:
 		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
-                @mov r1, SNORKEL_PROP
-                mov SNORKEL, r0
 		mov r0, #0                @ r0 = i; r1 = 400
 loop_out_wheel:
 		mov r2, #0x00001000       @ Falling edge
@@ -337,14 +334,6 @@ loop_out_wheel:
                 @b turn         @ ++i
 		cmp r0, r1               @ i <= 400, else break
 		blt loop_out_wheel
-
-
-@
-@ Turn-Mode
-@ This Class will take care of the calculation of the needed movement of the Snorkel. 
-@ As first step the turn-section is called. It reads the Hall-Sensor-State and saves it into r2.
-@ After that it checks if the hall sensor detects an object. If there is an object the level is zero.
-@ If that's the case the application is ended (edn_of_app). If not the wheel is turned (loop_out_wheel).
 turn:
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
@@ -369,12 +358,12 @@ logik_af:
         blt logic_forwards
 
 logic_backwards:
-        sub SNORKEL_PROP, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
+        sub r1, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
         bl turn_out_wheel
         b logic_end
 
 logic_forwards:
-        sub SNORKEL_PROP, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
         bl turn_out_wheel
         b logic_end
 
