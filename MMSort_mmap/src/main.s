@@ -231,7 +231,6 @@ main:
         add       sp, sp, #16                 @ restore sp
 
         @ initialize all other hardware
-
         b         hw_init
 
 hw_init:
@@ -271,6 +270,8 @@ loop_cw:
 		beq	turn_out_wheel
 		b loop_cw
 
+	turn_out_wheel:
+
         @b move_snorkel_color
 
 
@@ -291,7 +292,7 @@ delay_loop:
 @   return:    none
 @ -----------------------------------------------------------------------------
 mainloop:
-        mov r6, brown
+        mov r6, #red
         bl move_snorkel_color
         mov r6, r1
         bl move_outlet_steps
@@ -434,12 +435,12 @@ move_snorkel_color:
 move_snorkel_color_backwards:
         add r6, #400
         sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel
+        bl move_outlet_steps
         b move_snorkel_color_end
 
 move_snorkel_color_forwards:
         sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel       
+        bl move_outlet_steps
         b move_snorkel_color_end
 
 move_snorkel_color_end:
@@ -464,7 +465,7 @@ step_delay:
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
 step_delay_loop:
         add r1, #1
-        cmp r1, 0x2D0000
+        cmp r1, #0x2D0000
         blt step_delay_loop
         pop {r1, pc}
 
@@ -476,7 +477,7 @@ step_delay_loop:
 @ -----------------------------------------------------------------------------
 advance_colourwheel:
         @ TODO
-        bx
+        bx lr
 
 @ -----------------------------------------------------------------------------
 @ Turns off stuff that needs turning off
@@ -549,6 +550,7 @@ turn_on_counter:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
+
 
 
 @ --------------------------------------------------------------------------------------------------------------------
