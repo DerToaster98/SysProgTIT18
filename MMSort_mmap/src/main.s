@@ -47,6 +47,7 @@
 SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
+IRQREG	.req	  r7
 WAITREG .req      r8
 RLDREG  .req      r9
 GPIOREG .req      r10
@@ -233,7 +234,13 @@ hw_init:
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       GPIOREG, [r1]
 
+        ldr 	  r1, =timerir_mmap_adr		  @ reload the addr for accessing the Interrupts
+        ldr		  IRQREG, [r1]
+
         bl init_gpio
+
+        bl init_interrupt
+
         bl init_outlet
 
         bl mainloop
@@ -266,7 +273,7 @@ loop_cw:
 		beq	turn_out_wheel
 		b loop_cw
 
-        @b logik_af
+        @b logic_movement
 
 
 delay: push {r1}
@@ -277,27 +284,6 @@ delay_loop:
        blt delay_loop
        pop {r1}
        bx lr
-
-
-logik_af:
-        mov r1, #green @ test
-        cmp SNORKEL, r1
-        beq logic_end
-        bgt logic_backwards
-        blt logic_forwards
-
-logic_backwards:
-        sub r1, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel
-        b logic_end
-
-logic_forwards:
-        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel
-        b logic_end
-
-logic_end:
-        b end_of_app
 
 @ PLEASE IGNORE END
 
@@ -364,6 +350,21 @@ init_gpio:
 
         bx lr
 
+init_interrupt:
+		 @ Activate Falling Edge Detection for GPIO 9
+        mov r1, #0x00400000
+        str r1, [GPIOREG, #0x58]	@bit 10 to 1 in GPFEN0
+
+        @ Clear Pending bit for GPIO 9
+        mov r1, #0
+        str r1, [GPIOREG, #0x40]	@bit 10 to 0 in GPEDS0
+
+        @ Set Interrupt Enable bit for GPIO 9
+        mov r1, #0x00008000
+        str r1, [IRQREG, #0x214]	@bit 17 to 1 in IRQ enable 2
+
+        bx lr
+
 @ -----------------------------------------------------------------------------
 @ Moves the outlet to its default position
 @   param:     none
@@ -410,6 +411,33 @@ move_outlet_steps_exit:
         add SNORKEL, SNORKEL, r1  @ Update SNORKEL position
         cmp SNORKEL, #400         @ Do a wrap around at 400
         subge SNORKEL, SNORKEL, #400
+        pop {r0, r2, pc}
+
+@ -----------------------------------------------------------------------------
+@ Gets the difference between the current postition (SNORKEL) and the wanted Position (given from the get_color)
+@   param:     r6 --> the wanted position
+@   return:     r6 --> the needed amount of steps between current position and wanted position
+@ -----------------------------------------------------------------------------
+logic_movement:
+        push {r0, r2, lr}
+        mov r1, r6
+        cmp SNORKEL, r1
+        beq logic_end                                   @ The snorkel is already on the wanted position.
+        bgt logic_backwards                         @ The snorkel is too far. a full turn is required
+        blt logic_forwards                              @ The snorkel is in front of the wanted position. More steps are required
+
+logic_backwards:
+        sub r6, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        add r6, #400
+        bl turn_out_wheel
+        b logic_end
+
+logic_forwards:
+        sub r6, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl turn_out_wheel       
+        b logic_end
+
+logic_end:
         pop {r0, r2, pc}
 
 @ -----------------------------------------------------------------------------
