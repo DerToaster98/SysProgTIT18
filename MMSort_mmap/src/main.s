@@ -266,7 +266,7 @@ hw_init:
 mainloop:
         mov r6, #red
         bl move_snorkel_color
-        mov r6, r1
+        mov r1, r6
         bl move_outlet_steps
 mainloop_loop:
 mainloop_exit:
@@ -442,14 +442,14 @@ step_delay_loop:
         pop {r1, pc}
 
 @ -----------------------------------------------------------------------------
-@ Advances the colour wheel by a quarter revolution or until on of its magnets
-@ are detected by the hall sensor (but at least ... steps)
+@ Advances the colour wheel until on of its magnets are detected by the hall
+@ sensor but at least 50 steps
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
 advance_colourwheel:
-        push {r1, r2, r3, lr}
-	mov r1, #400              @ 400 = Quarter revolution
+        push {r1, r2, lr}
+	mov r1, #0               @ Loop counter
         mov r2, #0x00002000       @ Bit to toggle for step motor
 
 advance_colourwheel_loop:
@@ -457,11 +457,12 @@ advance_colourwheel_loop:
         bl delay
         str r2, [GPIOREG, #0x28]  @ Falling edge
         bl delay
-        sub r1, #1
-        cmp r1, #0
-        beq	turn_out_wheel
-        b loop_cw
-
+        add r1, #1                @ if i < 50 continue, else check if hall sensor detects
+        cmp r1, #50
+        blt advance_colourwheel_loop
+        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+ 	tst r2, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
+ 	bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
         pop {r1, r2, r3, lr}
 
 @ -----------------------------------------------------------------------------
