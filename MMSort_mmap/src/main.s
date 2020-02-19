@@ -290,11 +290,11 @@ hw_init:
         @   27 (Co-Processor Sleep) OUTPUT
         @Turn on feeder
         mov r1, #0x08000000    @ Sets Co-Processor Sleep and Feeder to activate turning the feeder
-        orr r1, #0x00080000
+        orr r1, #0x00090000
+        orr r1, #0x00000800
         str r1, [GPIOREG, #0x1C]
 
-        mov r1, #0x00000800     @ Sets Outlet RST and Outlet Step
-        str r1, [GPIOREG, #0x1C]
+
         @b turn_OutWheel
         b turn_color_wheel
 
@@ -308,10 +308,11 @@ loop_cw:
 		mov r2, #0x02000
 		@Setzen
 		str r2, [GPIOREG, #0x1C]
+		bl delay
 		mov r2, #0x02000
 		@Reset
 		str r2, [GPIOREG, #0x28]
-
+    bl delay
 		sub r1, #1
 		cmp r1, #0
 		beq	turn_out_wheel
@@ -325,8 +326,10 @@ turn_out_wheel:
 loop_out_wheel:
 		mov r2, #0x00001000       @ Falling edge
 		str r2, [GPIOREG, #0x1C]
+		bl delay
 		mov r2, #0x00001000       @ Rising edge
 		str r2, [GPIOREG, #0x28]
+		bl delay
 		add r0, r0, #1
                 @b turn         @ ++i
 		cmp r0, r1               @ i <= 400, else break
@@ -336,6 +339,14 @@ turn:
  	tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
  	beq end_of_app            @ Hall sensor doesn't have an object
         b loop_out_wheel
+
+delay: mov r1,#0x2D0000
+delay_loop:
+       sub r1,#1
+       bgt delay_loop
+       bx lr
+
+
 
 logik_af:
         mov r1, #green @ test
