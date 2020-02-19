@@ -340,12 +340,14 @@ turn:
  	beq end_of_app            @ Hall sensor doesn't have an object
         b loop_out_wheel
 
-delay: mov r1,#0x2D0000
+delay: push {r1}
+       mov r1,#0
 delay_loop:
-       sub r1,#1
-       bgt delay_loop
+       add r1,#1
+       cmp r1, #0x2D0000
+       blt delay_loop
+       pop {r1}
        bx lr
-
 
 
 logik_af:
