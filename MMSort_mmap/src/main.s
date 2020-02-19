@@ -233,74 +233,22 @@ hw_init:
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       GPIOREG, [r1]
 
-        @ TODO: PLEASE INIT HW HERE
-        @ HINT:
-        @   configuration of inputs is not necessary cause the pins are
-        @   configured as inputs after reset
+        bl init_gpio
+        bl init_outlet
 
-        @ GPIO CONFIGURATION
-        @ Input:
-        @   9 (Mittlerer Taster),
-        @   20 (Colour Wheel Hall),
-        @   21 (Outlet Hall),
-        @   22 - 23 (Farberkennung),
-        @   25 (Objektsensor)
-        @ Output:
-        @   2 - 7 (Output),
-        @   11 (Outlet RST),
-        @   12 (Outlet Step),
-        @   13 (Colour Wheel Step),
-        @   16 (Colour Wheel Direction),
-        @   17 (Colour Wheel RST),
-        @   19 (Feeder),
-        @   26 (Outlet Direction),
-        @   27 (Co-Processor Sleep)
-        @ GPFSEL0: Value: 00011111100 = 0x00249240
-        @ GPFSEL1: Value: 01011001110 = 0x08240248
-        @ GPFSEL2: Value: 00011000000 = 0x00240000
+        bl mainloop
 
-        @ Set GPFSEL0
-        mov r3, #0x00240000 @ r3: New configuration
-        orr r3, #0x00009200
-        orr r3, #0x00000040
-        str r3, [GPIOREG]  @ not unneccessarily override existing configuration
+        b end_of_app
 
-        @ Set GPFSEL1
-        mov r3, #0x08000000     @ r3: New configuration
-        orr r3, #0x00240000
-        orr r3, #0x00000200
-        orr r3, #0x00000048
-        str r3, [GPIOREG, #4]
-
-        @ Set GPFSEL2
-        mov r3, #0x00240000     @ r3: New configuration
-        str r3, [GPIOREG, #8]
-        
-        @ TODO: BRANCH HERE TO YOUR APPLICATION CODE
-        @ b         ...
-
-        @ WARNING:
-        @   call "end_of_app" if you're done with your application'
-
-        @ Used GPIOs:
-        @   11 (Outlet RST) OUTPUT
         @   12 (Outlet Step) OUTPUT
+        @   13 (Colour Wheel Step) OUTPUT
         @   19 (Feeder) OUTPUT
+        @   20 (Colour Wheel Hall) INPUT
         @   21 (Outlet Hall) INPUT
-        @   27 (Co-Processor Sleep) OUTPUT
-        @Turn on feeder
-        mov r1, #0x08000000    @ Sets Co-Processor Sleep and Feeder to activate turning the feeder
-        orr r1, #0x00080000
-        str r1, [GPIOREG, #0x1C]
 
-        mov r1, #0x00000800     @ Sets Outlet RST and Outlet Step
-        str r1, [GPIOREG, #0x1C]
-        @b turn_OutWheel
-        b turn_color_wheel
+@ PLEASE IGNORE START
 
 turn_color_wheel:
-		mov r1, #0x30000
-		str r1, [GPIOREG, #0x1C]		@Color Wheel RST
 		mov r1, #400
 
 loop_cw:
@@ -319,23 +267,6 @@ loop_cw:
 
         @b logik_af
 
-turn_out_wheel:
-		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
-		mov r0, #0                @ r0 = i; r1 = 400
-loop_out_wheel:
-		mov r2, #0x00001000       @ Falling edge
-		str r2, [GPIOREG, #0x1C]
-		mov r2, #0x00001000       @ Rising edge
-		str r2, [GPIOREG, #0x28]
-		add r0, r0, #1
-                @b turn         @ ++i
-		cmp r0, r1               @ i <= 400, else break
-		blt loop_out_wheel
-turn:
-        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
- 	tst r2, #0x00200000       @ Bit 21 is set, if there's no object in front of the sensor (Z = 0)
- 	beq end_of_app            @ Hall sensor doesn't have an object
-        b loop_out_wheel
 
 logik_af:
         mov r1, #green @ test
@@ -357,7 +288,158 @@ logic_forwards:
 logic_end:
         b end_of_app
 
+@ PLEASE IGNORE END
 
+@ -----------------------------------------------------------------------------
+@ Main loop
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+mainloop:
+        mov r1, #1
+        bl turn_feeder
+mainloop_loop:
+mainloop_exit:
+        b end_of_app
+
+@ -----------------------------------------------------------------------------
+@ Sets up GPIOs for later use
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+init_gpio:
+        @ GPIO CONFIGURATION
+        @ Input:
+        @   9 (Mittlerer Taster),
+        @   20 (Colour Wheel Hall),
+        @   21 (Outlet Hall),
+        @   22 - 23 (Farberkennung),
+        @   25 (Objektsensor)
+        @ Output:
+        @   2 - 7 (7-Segment),
+        @   11 (Outlet nRST),
+        @   12 (Outlet Step),
+        @   13 (Colour Wheel Step),
+        @   16 (Colour Wheel Direction),
+        @   17 (Colour Wheel nRST),
+        @   19 (Feeder),
+        @   26 (Outlet Direction),
+        @   27 (Co-Processor nSLP)
+        @ GPFSEL0: Value: 00011111100 = 0x00249240
+        @ GPFSEL1: Value: 01011001110 = 0x08240248
+        @ GPFSEL2: Value: 00011000000 = 0x00240000
+
+        @ Set GPFSEL0
+        mov r1, #0x00240000 @ r1: New configuration
+        orr r1, #0x00009200
+        orr r1, #0x00000040
+        str r1, [GPIOREG]
+
+        @ Set GPFSEL1
+        mov r1, #0x08000000     @ r1: New configuration
+        orr r1, #0x00240000
+        orr r1, #0x00000200
+        orr r1, #0x00000048
+        str r1, [GPIOREG, #4]
+
+        @ Set GPFSEL2
+        mov r1, #0x00240000     @ r1: New configuration
+        str r1, [GPIOREG, #8]
+
+        mov r1, #0x08000000      @ Sets Co-Processor nSLP, so it wakes up
+        orr r1, #0x000A0000      @ Sets Feeder to activate turning the feeder and sets coulorwheel nRST
+        orr r1, #0x00000800      @ Sets Outlet nRST
+        str r1, [GPIOREG, #0x1C] @ Write to Set-GPIO register
+
+        bx lr
+
+@ -----------------------------------------------------------------------------
+@ Moves the outlet to its default position
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+init_outlet:
+        push {r1, r2, lr}
+        mov r1, #4 @ while !outlet.at(hall_sensor) do turn a bit
+init_outlet_loop:
+        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+ 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+ 	blne move_outlet_steps    @ Hall sensor doesn't detect outlet
+        bne init_outlet_loop
+        mov r1, #32               @ Move to center of area in which the hall sensor detects
+        bl move_outlet_steps
+        mov SNORKEL, #0           @ Set position to 0
+        pop {r1, r2, pc}
+
+@ -----------------------------------------------------------------------------
+@ Move the outlet the specified number of steps (updates SNORKEL (position))
+@   param:     r1 -> The number of steps to move
+@   return:    none
+@ -----------------------------------------------------------------------------
+move_outlet_steps:
+        push {r0, r2, lr}                 @ for(int i = 0; i < STEPS; ++i)
+        mov r0, #0                @ r0 = i; r1 = STEPS
+        mov r2, #0x00001000       @ Selects bit to toggle for the step motor
+move_outlet_steps_loop:
+        cmp r0, r1                @ continue if i < STEPS, else break loop
+        bge move_outlet_steps_exit
+        str r2, [GPIOREG, #0x1C]  @ Rising edge
+        bl step_delay
+        str r2, [GPIOREG, #0x28]  @ Falling edge
+        bl step_delay
+        add r0, r0, #1
+        b move_outlet_steps_loop
+move_outlet_steps_exit:
+        add SNORKEL, SNORKEL, r1
+        cmp SNORKEL, #400
+        subge SNORKEL, SNORKEL, #400
+        pop {r0, r2, pc}
+
+@ -----------------------------------------------------------------------------
+@ Gets the colour detected by the colour sensor
+@   param:     none
+@   return:    
+@ -----------------------------------------------------------------------------
+get_colour:
+        @ TODO
+        bx lr
+
+@ -----------------------------------------------------------------------------
+@ Delays execution by the time the step motor needs between edges
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+step_delay:
+        push {r1, lr}
+        mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
+step_delay_loop:
+        add r1, #1
+        cmp r1, 0x2D0000
+        blt step_delay_loop
+        pop {r1, pc}
+
+@ -----------------------------------------------------------------------------
+@ Advances the colour wheel by a quarter revolution or until on of its magnets
+@ are detected by the hall sensor (but at least ... steps)
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+advance_colourwheel:
+        @ TODO
+        bx
+
+@ -----------------------------------------------------------------------------
+@ Turns off stuff that needs turning off
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+turn_off:
+        push {r1, lr}
+        mov r1, #0x08000000      @ Resets Co-Processor nSLP, so it goes to sleep
+        orr r1, #0x000A0000      @ Resets Feeder to activate turning the feeder and resets coulourwheel nRST
+        orr r1, #0x00000800      @ Resets Outlet nRST
+        str r1, [GPIOREG, #0x28] @ Write to Reset-GPIO register
+        pop {r1, pc}
 
 @ --------------------------------------------------------------------------------------------------------------------
 @
@@ -379,12 +461,6 @@ timerIR:
 @
 @ --------------------------------------------------------------------------------------------------------------------
 end_of_app:
-		@turn off feeder
-		mov r1, #0x08000000    @ Resets Co-Processor Sleep and Feeder to deactivate turning the feeder
-        orr r1, #0x00080000
-        str r1, [GPIOREG, #0x28]
-
-		@Mr Kleins stuff
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       r0, [r1]                    @ memory to unmap
         mov       r1, #PAGE_SIZE              @ amount we mapped
