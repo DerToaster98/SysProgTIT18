@@ -273,7 +273,7 @@ loop_cw:
 		beq	turn_out_wheel
 		b loop_cw
 
-        @b logic_movement
+        @b move_snorkel_color
 
 
 delay: push {r1}
@@ -418,26 +418,25 @@ move_outlet_steps_exit:
 @   param:     r6 --> the wanted position
 @   return:     r6 --> the needed amount of steps between current position and wanted position
 @ -----------------------------------------------------------------------------
-logic_movement:
+move_snorkel_color:
         push {r0, r2, lr}
-        mov r1, r6
-        cmp SNORKEL, r1
-        beq logic_end                                   @ The snorkel is already on the wanted position.
-        bgt logic_backwards                         @ The snorkel is too far. a full turn is required
-        blt logic_forwards                              @ The snorkel is in front of the wanted position. More steps are required
+        cmp SNORKEL, r6
+        beq move_snorkel_color_end                                   @ The snorkel is already on the wanted position.
+        bgt move_snorkel_color_backwards                         @ The snorkel is too far. a full turn is required
+        blt move_snorkel_color_forwards                              @ The snorkel is in front of the wanted position. More steps are required
 
-logic_backwards:
-        sub r6, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+move_snorkel_color_backwards:
         add r6, #400
+        sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
         bl turn_out_wheel
-        b logic_end
+        b move_snorkel_color_end
 
-logic_forwards:
-        sub r6, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+move_snorkel_color_forwards:
+        sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
         bl turn_out_wheel       
-        b logic_end
+        b move_snorkel_color_end
 
-logic_end:
+move_snorkel_color_end:
         pop {r0, r2, pc}
 
 @ -----------------------------------------------------------------------------
