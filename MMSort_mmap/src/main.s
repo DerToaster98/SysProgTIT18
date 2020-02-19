@@ -247,12 +247,6 @@ hw_init:
 
         b end_of_app
 
-        @   12 (Outlet Step) OUTPUT
-        @   13 (Colour Wheel Step) OUTPUT
-        @   19 (Feeder) OUTPUT
-        @   20 (Colour Wheel Hall) INPUT
-        @   21 (Outlet Hall) INPUT
-
 @ PLEASE IGNORE START
 
 turn_color_wheel:
@@ -293,8 +287,8 @@ delay_loop:
 @   return:    none
 @ -----------------------------------------------------------------------------
 mainloop:
-        mov r1, #1
-        bl turn_feeder
+        mov r6, brown
+        bl move
 mainloop_loop:
 mainloop_exit:
         b end_of_app
@@ -350,6 +344,11 @@ init_gpio:
 
         bx lr
 
+@ -----------------------------------------------------------------------------
+@ Sets the button interrupt up
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
 init_interrupt:
 		 @ Activate Falling Edge Detection for GPIO 9
         mov r1, #0x00400000
