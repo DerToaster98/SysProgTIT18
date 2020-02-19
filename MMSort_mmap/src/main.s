@@ -396,6 +396,7 @@ init_outlet_loop2:                @ while outlet.detected_by(hall_sensor) do tur
 @ -----------------------------------------------------------------------------
 move_outlet_steps:
         push {r0, r2, lr}                 @ for(int i = 0; i < STEPS; ++i)
+        @mov r1, r6
         mov r0, #0                @ r0 = i; r1 = STEPS
         mov r2, #0x00001000       @ Selects bit to toggle for the step motor
 move_outlet_steps_loop:
