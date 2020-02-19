@@ -288,7 +288,9 @@ delay_loop:
 @ -----------------------------------------------------------------------------
 mainloop:
         mov r6, brown
-        bl move
+        bl move_snorkel_color
+        mov r6, r1
+        bl move_outlet_steps
 mainloop_loop:
 mainloop_exit:
         b end_of_app
