@@ -83,6 +83,9 @@ timerir_mmap_adr:
 timerir_mmap_fd:
         .word     0
 
+mm_counter:
+		.word	  0
+
 @ - END OF DATA SECTION @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -227,6 +230,7 @@ main:
         add       sp, sp, #16                 @ restore sp
 
         @ initialize all other hardware
+
         b         hw_init
 
 hw_init:
@@ -245,6 +249,7 @@ hw_init:
         @   19 (Feeder) OUTPUT
         @   20 (Colour Wheel Hall) INPUT
         @   21 (Outlet Hall) INPUT
+
 
 @ PLEASE IGNORE START
 
@@ -451,6 +456,66 @@ turn_off:
         orr r1, #0x00000800      @ Resets Outlet nRST
         str r1, [GPIOREG, #0x28] @ Write to Reset-GPIO register
         pop {r1, pc}
+
+@ -----------------------------------------------------------------------------
+@ Increments the 7 segment display and shows the number
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+increment_counter:
+		@ TODO: Increment counter number by one
+		push 	{r1}
+		ldr 	r1, =mm_counter
+		add		r1, #1
+		str		r1, =mm_counter
+		pop 	{r1}
+
+@ -----------------------------------------------------------------------------
+@ Sets counter to 0
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+turn_off_counter:
+		@ TODO: Reset counter to 0
+
+@ -----------------------------------------------------------------------------
+@ Initializes counter and number display and displays the current number
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+turn_on_counter:
+		@ Segment '1' is the far left segment
+		@ Parse counter and set the segments
+		@ Bit values for things:
+		@ 0: 0-1-1-1-0-1-1-1
+		@ 1: 0-0-0-0-0-1-1-0
+		@ 2: 0-1-0-1-1-0-1-1
+		@ 3: 0-1-0-0-1-1-1-1
+		@ 4: 0-1-1-0-0-1-1-0
+		@ 5: 0-1-1-0-1-1-0-1
+		@ 6: 0-1-1-1-1-1-0-1
+		@ 7: 0-0-0-0-0-1-1-1
+		@ 8: 0-1-1-1-1-1-1-1
+		@ 9: 0-1-1-0-0-1-1-1
+		@ A und B setzen
+
+		@ nSRCLR auf HIGH setzen -> Warten auf Werte
+
+		@ Push bits into register according to the wished number
+			@ SER set to the bits value
+
+			@ SRCLK rising edge to confirm the value and to push
+
+		@ RCLK rising edge to confirm bits
+
+		@ nSRCLK set to low again so it knows we are done
+
+@ -----------------------------------------------------------------------------
+@ Turns off stuff that needs turning off
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+
 
 @ --------------------------------------------------------------------------------------------------------------------
 @
