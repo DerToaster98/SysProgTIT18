@@ -40,7 +40,7 @@
         .equ    green, 134
         .equ    blue, 200
         .equ    red, 268
-        .equ    brown, 334
+        .equ    brown, 336
         .equ    orange, 0
 
 
