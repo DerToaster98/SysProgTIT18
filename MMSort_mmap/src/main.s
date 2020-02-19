@@ -285,27 +285,6 @@ delay_loop:
        pop {r1}
        bx lr
 
-
-logik_af:
-        mov r1, #green @ test
-        cmp SNORKEL, r1
-        beq logic_end
-        bgt logic_backwards
-        blt logic_forwards
-
-logic_backwards:
-        sub r1, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel
-        b logic_end
-
-logic_forwards:
-        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel
-        b logic_end
-
-logic_end:
-        b end_of_app
-
 @ PLEASE IGNORE END
 
 @ -----------------------------------------------------------------------------
@@ -426,6 +405,33 @@ move_outlet_steps_exit:
         add SNORKEL, SNORKEL, r1
         cmp SNORKEL, #400
         subge SNORKEL, SNORKEL, #400
+        pop {r0, r2, pc}
+
+@ -----------------------------------------------------------------------------
+@ Move the outlet the specified number of steps (updates SNORKEL (position))
+@   param:     r1 -> The number of steps to move
+@   return:    none
+@ -----------------------------------------------------------------------------
+logik_af:
+        push {r0, r2, lr}
+        mov r1, r6
+        cmp SNORKEL, r1
+        beq logic_end                                   @ The snorkel is already on the wanted position.
+        bgt logic_backwards                         @ The snorkel is too far. a full turn is required
+        blt logic_forwards                              @ The snorkel is in front of the wanted position. More steps are required
+
+logic_backwards:
+        sub r6, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        add r6, #400
+        bl turn_out_wheel
+        b logic_end
+
+logic_forwards:
+        sub r6, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl turn_out_wheel       
+        b logic_end
+
+logic_end:
         pop {r0, r2, pc}
 
 @ -----------------------------------------------------------------------------
