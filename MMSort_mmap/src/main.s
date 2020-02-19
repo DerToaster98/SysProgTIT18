@@ -273,7 +273,7 @@ loop_cw:
 		beq	turn_out_wheel
 		b loop_cw
 
-        @b logik_af
+        @b logic_movement
 
 
 delay: push {r1}
@@ -408,11 +408,11 @@ move_outlet_steps_exit:
         pop {r0, r2, pc}
 
 @ -----------------------------------------------------------------------------
-@ Move the outlet the specified number of steps (updates SNORKEL (position))
-@   param:     r1 -> The number of steps to move
-@   return:    none
+@ Gets the difference between the current postition (SNORKEL) and the wanted Position (given from the get_color)
+@   param:     r6 --> the wanted position
+@   return:     r6 --> the needed amount of steps between current position and wanted position
 @ -----------------------------------------------------------------------------
-logik_af:
+logic_movement:
         push {r0, r2, lr}
         mov r1, r6
         cmp SNORKEL, r1
