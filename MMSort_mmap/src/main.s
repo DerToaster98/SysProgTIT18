@@ -47,6 +47,7 @@
 SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
+IRQREG	.req	  r7
 WAITREG .req      r8
 RLDREG  .req      r9
 GPIOREG .req      r10
@@ -237,19 +238,18 @@ hw_init:
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       GPIOREG, [r1]
 
+        ldr 	  r1, =timerir_mmap_adr		  @ reload the addr for accessing the Interrupts
+        ldr		  IRQREG, [r1]
+
         bl init_gpio
+
+        bl init_interrupt
+
         bl init_outlet
 
         bl mainloop
 
         b end_of_app
-
-        @   12 (Outlet Step) OUTPUT
-        @   13 (Colour Wheel Step) OUTPUT
-        @   19 (Feeder) OUTPUT
-        @   20 (Colour Wheel Hall) INPUT
-        @   21 (Outlet Hall) INPUT
-
 
 @ PLEASE IGNORE START
 
@@ -271,7 +271,7 @@ loop_cw:
 		beq	turn_out_wheel
 		b loop_cw
 
-        @b logik_af
+        @b move_snorkel_color
 
 
 delay: push {r1}
@@ -283,27 +283,6 @@ delay_loop:
        pop {r1}
        bx lr
 
-
-logik_af:
-        mov r1, #green @ test
-        cmp SNORKEL, r1
-        beq logic_end
-        bgt logic_backwards
-        blt logic_forwards
-
-logic_backwards:
-        sub r1, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel
-        b logic_end
-
-logic_forwards:
-        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl turn_out_wheel
-        b logic_end
-
-logic_end:
-        b end_of_app
-
 @ PLEASE IGNORE END
 
 @ -----------------------------------------------------------------------------
@@ -312,8 +291,10 @@ logic_end:
 @   return:    none
 @ -----------------------------------------------------------------------------
 mainloop:
-        mov r1, #1
-        bl turn_feeder
+        mov r6, brown
+        bl move_snorkel_color
+        mov r6, r1
+        bl move_outlet_steps
 mainloop_loop:
 mainloop_exit:
         b end_of_app
@@ -370,21 +351,47 @@ init_gpio:
         bx lr
 
 @ -----------------------------------------------------------------------------
+@ Sets the button interrupt up
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+init_interrupt:
+		 @ Activate Falling Edge Detection for GPIO 9
+        mov r1, #0x00400000
+        str r1, [GPIOREG, #0x58]	@bit 10 to 1 in GPFEN0
+
+        @ Clear Pending bit for GPIO 9
+        mov r1, #0
+        str r1, [GPIOREG, #0x40]	@bit 10 to 0 in GPEDS0
+
+        @ Set Interrupt Enable bit for GPIO 9
+        mov r1, #0x00008000
+        str r1, [IRQREG, #0x214]	@bit 17 to 1 in IRQ enable 2
+
+        bx lr
+
+@ -----------------------------------------------------------------------------
 @ Moves the outlet to its default position
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
 init_outlet:
         push {r1, r2, lr}
-        mov r1, #4 @ while !outlet.at(hall_sensor) do turn a bit
-init_outlet_loop:
+        mov r1, #1                
+
+init_outlet_loop1:                @ while !outlet.detected_by(hall_sensor) do turn
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
  	blne move_outlet_steps    @ Hall sensor doesn't detect outlet
-        bne init_outlet_loop
-        mov r1, #32               @ Move to center of area in which the hall sensor detects
-        bl move_outlet_steps
-        mov SNORKEL, #0           @ Set position to 0
+        bne init_outlet_loop1
+
+init_outlet_loop2:                @ while outlet.detected_by(hall_sensor) do turn backwards
+                                  @ (ensures the outlet is on the edge of the sensors detection range)
+        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+ 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+ 	bleq move_outlet_steps    @ Hall sensor detects outlet
+        beq init_outlet_loop2
+        mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
@@ -394,6 +401,7 @@ init_outlet_loop:
 @ -----------------------------------------------------------------------------
 move_outlet_steps:
         push {r0, r2, lr}                 @ for(int i = 0; i < STEPS; ++i)
+        @mov r1, r6
         mov r0, #0                @ r0 = i; r1 = STEPS
         mov r2, #0x00001000       @ Selects bit to toggle for the step motor
 move_outlet_steps_loop:
@@ -406,9 +414,35 @@ move_outlet_steps_loop:
         add r0, r0, #1
         b move_outlet_steps_loop
 move_outlet_steps_exit:
-        add SNORKEL, SNORKEL, r1
-        cmp SNORKEL, #400
+        add SNORKEL, SNORKEL, r1  @ Update SNORKEL position
+        cmp SNORKEL, #400         @ Do a wrap around at 400
         subge SNORKEL, SNORKEL, #400
+        pop {r0, r2, pc}
+
+@ -----------------------------------------------------------------------------
+@ Gets the difference between the current postition (SNORKEL) and the wanted Position (given from the get_color)
+@   param:     r6 --> the wanted position
+@   return:     r6 --> the needed amount of steps between current position and wanted position
+@ -----------------------------------------------------------------------------
+move_snorkel_color:
+        push {r0, r2, lr}
+        cmp SNORKEL, r6
+        beq move_snorkel_color_end                                   @ The snorkel is already on the wanted position.
+        bgt move_snorkel_color_backwards                         @ The snorkel is too far. a full turn is required
+        blt move_snorkel_color_forwards                              @ The snorkel is in front of the wanted position. More steps are required
+
+move_snorkel_color_backwards:
+        add r6, #400
+        sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl turn_out_wheel
+        b move_snorkel_color_end
+
+move_snorkel_color_forwards:
+        sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl turn_out_wheel       
+        b move_snorkel_color_end
+
+move_snorkel_color_end:
         pop {r0, r2, pc}
 
 @ -----------------------------------------------------------------------------
