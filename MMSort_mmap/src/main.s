@@ -252,37 +252,9 @@ hw_init:
 
 @ PLEASE IGNORE START
 
-turn_color_wheel:
-		mov r1, #400
 
-loop_cw:
-		@13. Bit setzen und resetten -> Color Wheel Step
-		mov r2, #0x02000
-		@Setzen
-		str r2, [GPIOREG, #0x1C]
-		bl delay
-		mov r2, #0x02000
-		@Reset
-		str r2, [GPIOREG, #0x28]
-    bl delay
-		sub r1, #1
-		cmp r1, #0
-		beq	turn_out_wheel
-		b loop_cw
-
-	turn_out_wheel:
 
         @b move_snorkel_color
-
-
-delay: push {r1}
-       mov r1,#0
-delay_loop:
-       add r1,#1
-       cmp r1, #0x2D0000
-       blt delay_loop
-       pop {r1}
-       bx lr
 
 @ PLEASE IGNORE END
 
@@ -298,7 +270,7 @@ mainloop:
         bl move_outlet_steps
 mainloop_loop:
 mainloop_exit:
-        b end_of_app
+        bx lr
 
 @ -----------------------------------------------------------------------------
 @ Sets up GPIOs for later use
@@ -380,18 +352,18 @@ init_outlet:
         push {r1, r2, lr}
         mov r1, #1                
 
-init_outlet_loop1:                @ while !outlet.detected_by(hall_sensor) do turn
+init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
  	blne move_outlet_steps    @ Hall sensor doesn't detect outlet
-        bne init_outlet_loop1
+        bne init_outlet_loop_until_detected
 
-init_outlet_loop2:                @ while outlet.detected_by(hall_sensor) do turn backwards
+init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do turn 
                                   @ (ensures the outlet is on the edge of the sensors detection range)
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
  	bleq move_outlet_steps    @ Hall sensor detects outlet
-        beq init_outlet_loop2
+        beq init_outlet_loop_while_detected
         mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
 
@@ -476,8 +448,21 @@ step_delay_loop:
 @   return:    none
 @ -----------------------------------------------------------------------------
 advance_colourwheel:
-        @ TODO
-        bx lr
+        push {r1, r2, r3, lr}
+	mov r1, #400              @ 400 = Quarter revolution
+        mov r2, #0x00002000       @ Bit to toggle for step motor
+
+advance_colourwheel_loop:
+        str r2, [GPIOREG, #0x1C]  @ Rising edge
+        bl delay
+        str r2, [GPIOREG, #0x28]  @ Falling edge
+        bl delay
+        sub r1, #1
+        cmp r1, #0
+        beq	turn_out_wheel
+        b loop_cw
+
+        pop {r1, r2, r3, lr}
 
 @ -----------------------------------------------------------------------------
 @ Turns off stuff that needs turning off
