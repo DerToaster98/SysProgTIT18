@@ -1,0 +1,36 @@
+Programmablauf:
+
+<MAIN LOOP>
+	if(button_start pressed)
+		branch to <PROGRAM LOOP>
+	if(button_end pressed)
+		branch to end_of_app
+<END OF MAIN LOOP>
+
+<PROGRAM_LOOP>
+
+INC TIMER
+	if(button_end pressed)
+		branch to end_of_app
+	if(button_pause pressed)
+		branch to MAIN LOOP
+	IF(M&M im Sensor)
+		Feeder abschalten
+		TIMER = 0
+		-> Drehe Color Wheel
+		-> Erkenne Farbe
+			-> Schalte LED's
+			-> Positioniere Schnorchel
+			-> Drehe Color Wheel
+				-> Warte kurz
+				-> Drehe Color Wheel wieder auf 0 Position
+				-> Wenn kein M&M mehr drin -> M&M Counter erhöhen, Feeder anschalten
+	if(TIMER >= TImeout)
+		Feeder abschalten
+		Schnorchel zurücksetzen
+		Color Wheel auf 0 drehen
+		LED's ausschalten
+		
+		branch to MAIN_LOOP
+	branch to PROGRAM_LOOP
+<END OF PROGRAM_LOOP>

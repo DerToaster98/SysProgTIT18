@@ -22,16 +22,14 @@
   - Use WS2812B library
 
 ## Execution order:
-- Init GPIOs
+- Init GPIOs and outlet
 - while active:
-  - while GPIO25 == Nothing
-    - Set GPIO1[36] = turn
-  - Set GPIO1[36] = stop
-  - Detect colour
-  - Position feeder
-  - while GPIO25 == Something
-    - Set GPIO1[35] = turn
-  - Set GPIO1[35] = stop
+  - Fetch M&M: while Colour == NA
+    - Set Feeder = turn
+    - Advance Colourwheel
+  - Set Feeder = stop
+  - Position outlet
+  - Advance Colourwheel
 
 ## Pseudoassembly:
 
@@ -89,7 +87,7 @@ main:
 fetch_mm:
   bl check_mm_in_wheel @ Until mm in feeder: pass
   teq RETREG, #1
-  beq detect_colour
+  bleq detect_colour
   b fetch_mm
   
 detect_colour:

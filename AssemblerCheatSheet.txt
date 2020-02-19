@@ -1,0 +1,177 @@
+In Subroutine springen:
+		BL	do_add
+	
+	do_add: ADD r0,r0,r1 @Ergebnis Register, Zahl 1, Zahl 2
+	
+Zurückgehen and Absprungstelle:
+		BX	lr @lr = Linkregister
+		
+Ende des Programmes setzen:
+		.end
+		
+Problem bei Schachtelungen: Linkregister kann nur eine Adresse merken
+		Bei zweiten geschachteltem Sprung: Linkregister auf den Stack legen
+		
+		PUSH	{r5-r7,r10,lr} @In {} kommt hin was wir auf den Stack pushen wollen    r5-r7: Register 5,6,7 
+		Was als letztes steht ist am Ende oben auf dem Stack
+		
+		Jetzt erst darf man springen
+		BL XXX
+		
+		Zurück in erste Schachtelung: normal BX lr
+		
+		Ganz an den Anfang: Erst das Linkregister aus dem Stack laden, dann normal BX lr
+		/!\Bei POP muss man die Reihenfolge  N I C H T  umkehren, er macht das von selbst /!\
+		POP {r5-r7,r10,ZIEL_REGISTER_WO_WIR_LR_HIN_HABEN_WOLLEN} @Man kann fürs Ziel Register direkt pc hinschreiben, somit spart man sich den Sprungbefehl
+
+Wegspringen ohne merken wo man her kommt:
+		Beim BL das L weglassen
+		B @Branch
+		
+Werte laden:
+	LDR r11,[r0] @In []: meint die Adresse von dem was in den [] steht
+	
+	LDRB 	:Man nimmt nur ein Byte
+	LDRH 	:Man nimmt zwei Byte (=Half Word)
+	LDRSB	:Man nimmt signed Byte
+	LDRSH	:Man nimmt signed Half Word
+	LDM 	:Mehrere Bytes hintereinander nehmen
+	
+	Was macht LDRH	r11,[r0]
+								Memory	Address
+					r0=0x8000   0xEE	0x8000 
+								0xFF	 ....
+								0x90	 ....
+								0xA7	0x8003
+								
+				r11 before: 	0x12345678
+				r11 after: 		0x0000FFEE
+				
+				LDR		0xA790FFEE
+				
+									Memory	Address
+				LDRSH	r11,[r0]	0xEE	0x8000
+									0x8C	 ....
+									0x90	 ....
+									0xA7	0x8003
+									
+					r11 after: 0xFFFF8CEE
+	
+	Was macht LDR r9,[r12,r8,LSL#2]		@ [...] baut eine Adresse zusammen, wobei r12 die Basis und r8,LSL#2 ein Offset bilden
+										@ Adresse ist somit r12 + r8 *4 (4 wegen 2 mal shiften, was x4 entspricht)
+										@ LSL: Logical Shift Left # WIE_OFT_NACH_LINKS
+	
+Werte in den Speicher legen
+	STR
+	
+	STRB	:Ein Byte in den Speicher legen
+	STRH	:Ein Half Word in den Speicher legen
+	
+	
+				STR 	r3,[r8]		@wir wollen den Inhalt von r3 in r8 speichern
+									Memory	Address
+					r3=0xFEEDBABE	0xBE	0x8000
+									0xBA	 ....
+									0xED	 ....
+									0xGE	0x8003
+									
+					r8=0x8000
+					r8 before = r8 after, da wir r8 nicht ändern
+					
+				Wie sieht es aus mit ?
+				STR		r3,[r8],#4
+				
+				r8 after = 0x8004	@--> #NUMBER inkrementiert hier r8 um NUMBER
+				
+
+In Register "schreiben"
+	MOV r0,#0xFF		@Schreibt FF in r0 rein -> r0 = 255
+	MOV r0,#0x1,30		@r0=4, weil er es schieben
+	MOV r0,#0x1,26		@r0=64
+	
+	
+			Bsp.: 4080 = 1111 1111 0000 /Dual
+				  Byte = 1111 1111 = 0xFF = 255
+						--> nbits nach links schieben <=> rechts rotieren mal=> 32- nbits
+																				32-4 = 28
+										Das hier ist: MOV r0,#0xFF,28			|28 = "Wie oft rotieren Ich rechts rum?"
+								
+Shiften:
+	LSL		Logical Shift Left
+	
+	Operand1		Operand2
+		|				|
+		|			/########\
+		|			#Barrel- #
+		|			# Shifter#
+		|			\########/
+		|				|
+	/########################\
+	#			ALU			 #
+	\########################/
+				 |
+			   Result
+			   
+Bitstellen	7 6 5 4 3 2 1 0
+			0 0 0 1 0 1 1 1
+			
+			ergebnis = 00101110
+
+Right shift: Einfach andersherum, wird aber auch mit 0 aufgefüllt
+	ROR		Rotate Right
+	
+	7 6 5 4 3 2 1 0
+	0 0 0 1 0 1 1 1
+	Rotieren um 1 ==> 1 0 0 0 1 0 1 1
+
+//Speicher reservieren
+Bei Konstantendeklaration:
+	P:      .space  4	//Hier wissen wir nicht welcher Wert reinkommt... (ist z.B. ein Ergebnis)
+	Q:		.word	2
+	R:		.word	4
+	S:		.word	5
+	
+	Solche Werte in register laden: LDR REGISTER,KONSTANTE	(!OHNE #!)
+
+Speicher über Array reservieren
+
+Werte aus Array holen
+P:		.word  4 
+Q:		.word  4
+...
+
+.equ	P,0
+.equ	Q,4
+.equ	R,8
+...   -> Zahl: Datengröße
+
+Array definieren
+Vals:	 .space  4
+		 .word	 2
+		 .word   4
+		 .word	 5
+		 .align
+		 .end
+		 
+//Adresse aus Speicher laden, wenn es unterschiedliche Variablen gibt
+ADRL	REGISTER,VARIABLE
+
+Bsp.: Direkt auf Array zugreifen
+
+ADRL	R4,Vals  		@ Vals = Array
+LDR		R1,[R4,#Q]		@ Lädt Wer bei Q in Array Vals in R1
+
+Zurück in Array schreiben
+STR		Register mit was wir speichern wollen,[Register von Array,Wert]
+
+//EIN BEISPIEL, nicht kompilierbar								
+										
+SRAM_BASE:	EQU		0x0400 0000
+			AREA	EXAMPLE,CORE,READONLY
+			
+Main:
+			MOV		r0,#SRAM_BASE		@ In r0 den SRAM reinkopieren. PROBLEM: SRAM ist zu groß!
+			MOV		r1,#0xFF00 0000		@ In r1 was reinschreiben, geht aber nicht weil zu groß....
+			
+			Lösung: LDR		r0,=SRAM_BASE
+			

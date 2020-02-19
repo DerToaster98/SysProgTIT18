@@ -256,16 +256,27 @@ loop_cw:
 		mov r2, #0x02000
 		@Setzen
 		str r2, [GPIOREG, #0x1C]
+		bl delay
 		mov r2, #0x02000
 		@Reset
 		str r2, [GPIOREG, #0x28]
-
+    bl delay
 		sub r1, #1
 		cmp r1, #0
 		beq	turn_out_wheel
 		b loop_cw
 
         @b logik_af
+
+
+delay: push {r1}
+       mov r1,#0
+delay_loop:
+       add r1,#1
+       cmp r1, #0x2D0000
+       blt delay_loop
+       pop {r1}
+       bx lr
 
 
 logik_af:
