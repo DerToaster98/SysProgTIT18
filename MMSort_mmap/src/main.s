@@ -371,15 +371,21 @@ init_gpio:
 @ -----------------------------------------------------------------------------
 init_outlet:
         push {r1, r2, lr}
-        mov r1, #4 @ while !outlet.at(hall_sensor) do turn a bit
-init_outlet_loop:
+        mov r1, #1                
+
+init_outlet_loop1:                @ while !outlet.detected_by(hall_sensor) do turn
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
  	blne move_outlet_steps    @ Hall sensor doesn't detect outlet
-        bne init_outlet_loop
-        mov r1, #32               @ Move to center of area in which the hall sensor detects
-        bl move_outlet_steps
-        mov SNORKEL, #0           @ Set position to 0
+        bne init_outlet_loop1
+
+init_outlet_loop2:                @ while outlet.detected_by(hall_sensor) do turn backwards
+                                  @ (ensures the outlet is on the edge of the sensors detection range)
+        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+ 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+ 	bleq move_outlet_steps    @ Hall sensor detects outlet
+        beq init_outlet_loop2
+        mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
@@ -401,8 +407,8 @@ move_outlet_steps_loop:
         add r0, r0, #1
         b move_outlet_steps_loop
 move_outlet_steps_exit:
-        add SNORKEL, SNORKEL, r1
-        cmp SNORKEL, #400
+        add SNORKEL, SNORKEL, r1  @ Update SNORKEL position
+        cmp SNORKEL, #400         @ Do a wrap around at 400
         subge SNORKEL, SNORKEL, #400
         pop {r0, r2, pc}
 
