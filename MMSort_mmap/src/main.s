@@ -51,6 +51,7 @@ WAITREG .req      r8
 RLDREG  .req      r9
 GPIOREG .req      r10
 COLREG  .req      r11
+IRQREG	.req	  r12
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @ - START OF DATA SECTION @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -233,7 +234,23 @@ hw_init:
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       GPIOREG, [r1]
 
+        ldr 	  r1, =timerir_mmap_adr		  @ reload the addr for accessing the Interrupts
+        ldr		  IRQREG, [r1]
+
         bl init_gpio
+
+        @ Activate Falling Edge Detection for GPIO 9
+        mov r1, #0x00400000
+        str r1, [GPIOREG, #0x58]	@bit 10 to 1 in GPFEN0
+
+        @ Clear Pending bit for GPIO 9
+        mov r1, #0
+        str r1, [GPIOREG, #0x40]	@bit 10 to 0 in GPEDS0
+
+        @ Set Interrupt Enable bit for GPIO 9
+        mov r1, #0x00008000
+        str r1, [IRQREG, #0x214]	@bit 17 to 1 in IRQ enable 2
+
         bl init_outlet
 
         bl mainloop
@@ -374,8 +391,8 @@ init_outlet:
         mov r1, #4 @ while !outlet.at(hall_sensor) do turn a bit
 init_outlet_loop:
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
- 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
- 	blne move_outlet_steps    @ Hall sensor doesn't detect outlet
+ 		tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+ 		blne move_outlet_steps    @ Hall sensor doesn't detect outlet
         bne init_outlet_loop
         mov r1, #32               @ Move to center of area in which the hall sensor detects
         bl move_outlet_steps
