@@ -44,7 +44,8 @@
         .equ    orange, 0
 
 
-SNORKEL .req      r4
+SNORKEL .req      r4         @ current position of the snorkel 
+SNORKEL_PROP .req r7   @ needed position of the snorkel
 TMPREG  .req      r5
 RETREG  .req      r6
 WAITREG .req      r8
@@ -322,6 +323,8 @@ loop_cw:
 
 turn_out_wheel:
 		mov r1, #400              @ for(int i = 0; i <= 400; ++i)
+                @mov r1, SNORKEL_PROP
+                mov SNORKEL, r0
 		mov r0, #0                @ r0 = i; r1 = 400
 loop_out_wheel:
 		mov r2, #0x00001000       @ Falling edge
@@ -356,12 +359,12 @@ logik_af:
         blt logic_forwards
 
 logic_backwards:
-        sub r1, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
+        sub SNORKEL_PROP, SNORKEL, r1  @r1: Difference between current position and future position: Steps to take to get to next position.
         bl turn_out_wheel
         b logic_end
 
 logic_forwards:
-        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        sub SNORKEL_PROP, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
         bl turn_out_wheel
         b logic_end
 
