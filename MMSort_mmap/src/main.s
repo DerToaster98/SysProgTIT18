@@ -375,8 +375,8 @@ init_gpio:
 wait_button_start:
         ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
         tst r2, #0x100     @ Bit 8 is set, --> button not pressed
-        beq wait_button_start
-        bxne lr
+        bne wait_button_start
+        bx lr
 
 @ -----------------------------------------------------------------------------
 @ Sets the button interrupt up
@@ -580,7 +580,7 @@ color_red:
 @   return:    none
 @ -----------------------------------------------------------------------------
 show_led:
-        push {r1, r2, r3, SNORKEL, GPIOREG, lr}
+        push {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, lr}
         cmp r1, #orange
         beq show_led_orange
         cmp r1, #yellow
@@ -597,7 +597,8 @@ show_led:
 
 show_led_exit:
         bl WS2812RPi_Show
-        pop {r1, r2, r3, SNORKEL, GPIOREG, pc}
+        bl init_gpio              @ Don't trust the library
+        pop {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, pc}
    
 show_led_orange:
         mov r0, #1
