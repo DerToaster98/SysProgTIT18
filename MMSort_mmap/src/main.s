@@ -645,12 +645,12 @@ step_delay_loop:
 
 @ -----------------------------------------------------------------------------
 @ Advances the colour wheel until on of its magnets are detected by the hall
-@ sensor but at least 50 steps
+@ sensor but at least 200 steps
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
 advance_colourwheel:
-        push {r1, r2, lr}         @ for (int i = 0; i < 50 || sensor == 1; ++i)
+        push {r1, r2, lr}         @ for (int i = 0; i < 200 || sensor == 1; ++i)
        mov r1, #0                @ r1: i
         mov r2, #0x00002000       @ Bit to toggle for step motor
 
@@ -660,12 +660,12 @@ advance_colourwheel_loop:
         str r2, [GPIOREG, #0x28]  @ Falling edge
         bl step_delay
         add r1, #1                @ if i < 50 continue, else check if hall sensor detects
-        cmp r1, #50
+        cmp r1, #200
         blt advance_colourwheel_loop
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
         tst r2, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
-        pop {r1, r2, lr}
+        pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
 @ Turns off stuff that needs turning off
