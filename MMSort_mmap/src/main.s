@@ -283,14 +283,30 @@ mainloop:
         bl move_outlet_steps
         b mainloop_exit
         
+        mov r1, 0x00080000        @ r1: Feeder bit
 mainloop_loop:
         @ldr r1, =active
+        mov r2, #1                @ while (true); For now ...
         beq mainloop_exit
 
-        mov r1, 0x00080000        @ r1: Feeder bit
         str r1, [GPIOREG, #0x1C]  @ Turn on feeder
-        
+mainloop_fetch_mm:
+        mov RETREG, #0xFF000000   @ If colour is NA, r6 is left unchanged, thus NA = 0xFF000000
+        bl get_colour
+        cmp RETREG, #0xFF000000
+        bne mainloop_fetch_mm_end
+        bl advance_colourwheel
+        @bl step_delay            @ Give the colour sensor time to think
+        b mainloop_fetch_mm
+mainloop_fetch_mm_end:
         str r1, [GPIOREG, #0x28]  @ Turn off feeder
+
+        mov r1, RETREG            @ r1: Colour
+        bl move_snorkel_color
+        mov r1, RETREG            @ r1: Steps to move
+        bl move_outlet_steps      @ Position outlet
+
+        bl advance_colourwheel
 
         b mainloop_loop
 
@@ -342,7 +358,7 @@ init_gpio:
         str r1, [GPIOREG, #8]
 
         mov r1, #0x08000000      @ Sets Co-Processor nSLP, so it wakes up
-        orr r1, #0x00020000      @ Sets coulorwheel nRST
+        orr r1, #0x00020000      @ Sets colourwheel nRST
         orr r1, #0x00000800      @ Sets Outlet nRST
         str r1, [GPIOREG, #0x1C] @ Write to Set-GPIO register
 
@@ -419,11 +435,12 @@ move_outlet_steps_exit:
 
 @ -----------------------------------------------------------------------------
 @ Gets the difference between the current postition (SNORKEL) and the wanted Position (given from the get_color)
-@   param:     r6 --> the wanted position
-@   return:     r6 --> the needed amount of steps between current position and wanted position
+@   param:     r1 --> the wanted position
+@   return:    r6 --> the needed amount of steps between current position and wanted position
 @ -----------------------------------------------------------------------------
 move_snorkel_color:
         push {r0, r2, lr}
+        mov r6, r1
         cmp SNORKEL, r6
         beq move_snorkel_color_end                                   @ The snorkel is already on the wanted position.
         bgt move_snorkel_color_backwards                         @ The snorkel is too far. a full turn is required
@@ -432,12 +449,12 @@ move_snorkel_color:
 move_snorkel_color_backwards:
         add r6, #400
         sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl move_outlet_steps
+        @bl move_outlet_steps
         b move_snorkel_color_end
 
 move_snorkel_color_forwards:
         sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        bl move_outlet_steps
+        @bl move_outlet_steps
         b move_snorkel_color_end
 
 move_snorkel_color_end:
@@ -452,29 +469,25 @@ get_colour:
         @ TODO
        	ldr  r1,[GPIOREG, #0x34]
        	tst  r1,#0x0400000    @Is Color red?
-       	beq color_red
+       	bne color_red
 
-       	ldr  r1,[GPIOREG, #0x34]
        	tst  r1,#0x0800000    @Is Color green?
-       	beq color_green
+       	bne color_green
 
-       	ldr  r1,[GPIOREG, #0x34]
        	tst  r1,#0x0C00000    @Is Color blue?
-       	beq  color_blue
+       	bne  color_blue
 
-       	ldr  r1,[GPIOREG, #0x34]
        	tst  r1,#0x1000000    @Is Color brown?
-       	beq  color_brown
+       	bne  color_brown
 
-       	ldr  r1,[GPIOREG, #0x34]
        	tst  r1,#0x1400000    @Is Color orange?
-       	beq  color_orange
+       	bne  color_orange
 
-       	ldr  r1,[GPIOREG, #0x34]
        	tst  r1,#0x1800000    @Is Color yellow?
-       	beq color_yellow
+       	bne color_yellow
 
-	    bx lr
+        bx lr
+
 color_yellow:
     	mov RETREG,#yellow
        	bx lr
