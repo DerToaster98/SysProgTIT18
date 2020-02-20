@@ -651,9 +651,9 @@ advance_colourwheel:
 
 advance_colourwheel_loop:
         str r2, [GPIOREG, #0x1C]  @ Rising edge
-        bl delay
+        bl step_delay
         str r2, [GPIOREG, #0x28]  @ Falling edge
-        bl delay
+        bl step_delay
         add r1, #1                @ if i < 50 continue, else check if hall sensor detects
         cmp r1, #50
         blt advance_colourwheel_loop
