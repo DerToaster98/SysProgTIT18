@@ -43,22 +43,22 @@
         .equ    brown, 336
         .equ    orange, 0
 
-		@Bits for the numbers on the seven segment display, they are already in the right order
-        .equ	bits_nmbr_0, 0x77 	@01110111
-        .equ	bits_nmbr_1, 0x6  	@00000110
-        .equ	bits_nmbr_2, 0x5B	@01011011
-        .equ	bits_nmbr_3, 0x4F	@01001111
-		.equ	bits_nmbr_4, 0x66	@01100110
-		.equ	bits_nmbr_5, 0x6D	@01101101
-		.equ	bits_nmbr_6, 0x7D	@01111101
-		.equ	bits_nmbr_7, 0x7	@00000111
-		.equ	bits_nmbr_8, 0x7F	@01111111
-		.equ	bits_nmbr_9, 0x67	@01100111
+              @Bits for the numbers on the seven segment display, they are already in the right order
+        .equ       bits_nmbr_0, 0x77        @01110111
+        .equ       bits_nmbr_1, 0x6         @00000110
+        .equ       bits_nmbr_2, 0x5B       @01011011
+        .equ       bits_nmbr_3, 0x4F       @01001111
+              .equ       bits_nmbr_4, 0x66       @01100110
+              .equ       bits_nmbr_5, 0x6D       @01101101
+              .equ       bits_nmbr_6, 0x7D       @01111101
+              .equ       bits_nmbr_7, 0x7       @00000111
+              .equ       bits_nmbr_8, 0x7F       @01111111
+              .equ       bits_nmbr_9, 0x67       @01100111
 
 SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
-IRQREG	.req	  r7
+IRQREG       .req         r7
 WAITREG .req      r8
 RLDREG  .req      r9
 GPIOREG .req      r10
@@ -96,7 +96,7 @@ timerir_mmap_fd:
         .word     0
 
 mm_counter:
-		.word	  0
+              .word         0
 
 @ - END OF DATA SECTION @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -248,8 +248,8 @@ hw_init:
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       GPIOREG, [r1]
 
-        ldr 	  r1, =timerir_mmap_adr		  @ reload the addr for accessing the Interrupts
-        ldr		  IRQREG, [r1]
+        ldr          r1, =timerir_mmap_adr                @ reload the addr for accessing the Interrupts
+        ldr                IRQREG, [r1]
 
         bl init_gpio
 
@@ -373,7 +373,7 @@ init_gpio:
 wait_button_start:
         push {lr}
         ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
- 	tst r2, #0x80     @ Bit 8 is set, --> button not pressed
+        tst r2, #0x80     @ Bit 8 is set, --> button not pressed
         beq wait_button_start
         popne {pc}
 
@@ -383,17 +383,17 @@ wait_button_start:
 @   return:    none
 @ -----------------------------------------------------------------------------
 init_interrupt:
-		 @ Activate Falling Edge Detection for GPIO 9
+               @ Activate Falling Edge Detection for GPIO 9
         mov r1, #0x00400000
-        str r1, [GPIOREG, #0x58]	@bit 10 to 1 in GPFEN0
+        str r1, [GPIOREG, #0x58]       @bit 10 to 1 in GPFEN0
 
         @ Clear Pending bit for GPIO 9
         mov r1, #0
-        str r1, [GPIOREG, #0x40]	@bit 10 to 0 in GPEDS0
+        str r1, [GPIOREG, #0x40]       @bit 10 to 0 in GPEDS0
 
         @ Set Interrupt Enable bit for GPIO 9
         mov r1, #0x00008000
-        str r1, [IRQREG, #0x214]	@bit 17 to 1 in IRQ enable 2
+        str r1, [IRQREG, #0x214]       @bit 17 to 1 in IRQ enable 2
 
         bx lr
 
@@ -408,20 +408,20 @@ init_outlet:
 
 init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
- 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+        tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         beq init_outlet_loop_while_detected @ if detected, move to next loop
- 	bl move_outlet_steps    @ Hall sensor doesn't detect outlet
+        bl move_outlet_steps    @ Hall sensor doesn't detect outlet
         b init_outlet_loop_until_detected
 
 init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do turn 
                                   @ (ensures the outlet is on the edge of the sensors detection range)
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
- 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+        tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne init_outlet_exit      @ if not detected any more, exit
- 	bl move_outlet_steps      @ Hall sensor detects outlet
+        bl move_outlet_steps      @ Hall sensor detects outlet
         b init_outlet_loop_while_detected
 
-init_outlet_exit
+init_outlet_exit:
         mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
 
@@ -532,45 +532,45 @@ move_snorkel_color_end:
 @ -----------------------------------------------------------------------------
 get_colour:
         @ TODO
-       	ldr  r1,[GPIOREG, #0x34]
-       	tst  r1,#0x0400000    @Is Color red?
-       	bne color_red
+              ldr  r1,[GPIOREG, #0x34]
+              tst  r1,#0x0400000    @Is Color red?
+              bne color_red
 
-       	tst  r1,#0x0800000    @Is Color green?
-       	bne color_green
+              tst  r1,#0x0800000    @Is Color green?
+              bne color_green
 
-       	tst  r1,#0x0C00000    @Is Color blue?
-       	bne  color_blue
+              tst  r1,#0x0C00000    @Is Color blue?
+              bne  color_blue
 
-       	tst  r1,#0x1000000    @Is Color brown?
-       	bne  color_brown
+              tst  r1,#0x1000000    @Is Color brown?
+              bne  color_brown
 
-       	tst  r1,#0x1400000    @Is Color orange?
-       	bne  color_orange
+              tst  r1,#0x1400000    @Is Color orange?
+              bne  color_orange
 
-       	tst  r1,#0x1800000    @Is Color yellow?
-       	bne color_yellow
+              tst  r1,#0x1800000    @Is Color yellow?
+              bne color_yellow
 
         bx lr
 
 color_yellow:
-    	mov RETREG,#yellow
-       	bx lr
+           mov RETREG,#yellow
+              bx lr
 color_orange:
-       	mov RETREG,#orange
-       	bx lr
+              mov RETREG,#orange
+              bx lr
 color_brown:
-       	mov RETREG,#brown
-       	bx lr
+              mov RETREG,#brown
+              bx lr
 color_blue:
-       	mov RETREG,#blue
-       	bx lr
+              mov RETREG,#blue
+              bx lr
 color_green:
-       	mov RETREG,#green
-       	bx lr
+              mov RETREG,#green
+              bx lr
 color_red:
-       	mov RETREG,#red
-       	bx lr
+              mov RETREG,#red
+              bx lr
 
 
 @ -----------------------------------------------------------------------------
@@ -650,7 +650,7 @@ step_delay_loop:
 @ -----------------------------------------------------------------------------
 advance_colourwheel:
         push {r1, r2, lr}         @ for (int i = 0; i < 50 || sensor == 1; ++i)
-	mov r1, #0                @ r1: i
+       mov r1, #0                @ r1: i
         mov r2, #0x00002000       @ Bit to toggle for step motor
 
 advance_colourwheel_loop:
@@ -662,8 +662,8 @@ advance_colourwheel_loop:
         cmp r1, #50
         blt advance_colourwheel_loop
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
- 	tst r2, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
- 	bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
+        tst r2, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
+        bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
         pop {r1, r2, lr}
 
 @ -----------------------------------------------------------------------------
@@ -689,83 +689,83 @@ turn_off:
 @   return:    none
 @ -----------------------------------------------------------------------------
 increment_counter:
-		@ DONE: Increment counter number by one
-		push 	{r1, r2}
-		ldr 	r2, =mm_counter
-		ldr		r1, [r2]
-		add		r1, #1
-		str		r1, [r2]
-		pop 	{r1, r2}
+              @ DONE: Increment counter number by one
+              push        {r1, r2}
+              ldr        r2, =mm_counter
+              ldr              r1, [r2]
+              add              r1, #1
+              str              r1, [r2]
+              pop        {r1, r2}
 
-		@Temporary code for displaying ###4 on the display
-		@push	{r1}
-		@mov		r1, #0x10			@sets nSRCLR to high, its the 5th bit in the bit mask -> 10000
-		@str 	r1, [GPIOREG, #0x1C]
-		@mov		r1, #0xC0			@sets A and B to high, they are bit 7 and 8 ->	11000000
-		@str		r1, [GPIOREG, #0x1C]
-		@
-		@push	{r2}
-		@
-		@mov		r2, #0x4
-		@str		r2, [GPIOREG, #0x1C]
-		@
-		@@Rising edge on SRCLK
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@str		r2, [GPIOREG, #0x1C]
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@str		r2, [GPIOREG, #0x1C]
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@str		r2, [GPIOREG, #0x1C]
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@str		r2, [GPIOREG, #0x1C]
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@str		r2, [GPIOREG, #0x1C]
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@str		r2, [GPIOREG, #0x1C]
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@str		r2, [GPIOREG, #0x1C]
-		@mov		r1, #0x8
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@mov		r1, #0x20
-		@str		r1, [GPIOREG, #0x1C]
-		@mov		r1, #0x0
-		@str		r1, [GPIOREG, #0x28]
-		@
-		@pop		{r2}
-		@pop		{r1}
+              @Temporary code for displaying ###4 on the display
+              @push       {r1}
+              @mov              r1, #0x10                     @sets nSRCLR to high, its the 5th bit in the bit mask -> 10000
+              @str        r1, [GPIOREG, #0x1C]
+              @mov              r1, #0xC0                     @sets A and B to high, they are bit 7 and 8 ->       11000000
+              @str              r1, [GPIOREG, #0x1C]
+              @
+              @push       {r2}
+              @
+              @mov              r2, #0x4
+              @str              r2, [GPIOREG, #0x1C]
+              @
+              @@Rising edge on SRCLK
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @str              r2, [GPIOREG, #0x1C]
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @str              r2, [GPIOREG, #0x1C]
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @str              r2, [GPIOREG, #0x1C]
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @str              r2, [GPIOREG, #0x1C]
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @str              r2, [GPIOREG, #0x1C]
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @str              r2, [GPIOREG, #0x1C]
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @str              r2, [GPIOREG, #0x1C]
+              @mov              r1, #0x8
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @mov              r1, #0x20
+              @str              r1, [GPIOREG, #0x1C]
+              @mov              r1, #0x0
+              @str              r1, [GPIOREG, #0x28]
+              @
+              @pop              {r2}
+              @pop              {r1}
 
-		bx 		lr
+              bx               lr
 
 @ -----------------------------------------------------------------------------
 @ Sets counter to 0
@@ -773,7 +773,7 @@ increment_counter:
 @   return:    none
 @ -----------------------------------------------------------------------------
 turn_off_counter:
-		@ TODO: Reset counter to 0
+              @ TODO: Reset counter to 0
 
 @ -----------------------------------------------------------------------------
 @ Initializes counter and number display and displays the current number
@@ -781,31 +781,31 @@ turn_off_counter:
 @   return:    none
 @ -----------------------------------------------------------------------------
 turn_on_counter:
-		@ Segment '1' is the far left segment
-		@ Parse counter and set the segments
-		@ Bit values for things:
-		@ 0: 0-1-1-1-0-1-1-1
-		@ 1: 0-0-0-0-0-1-1-0
-		@ 2: 0-1-0-1-1-0-1-1
-		@ 3: 0-1-0-0-1-1-1-1
-		@ 4: 0-1-1-0-0-1-1-0
-		@ 5: 0-1-1-0-1-1-0-1
-		@ 6: 0-1-1-1-1-1-0-1
-		@ 7: 0-0-0-0-0-1-1-1
-		@ 8: 0-1-1-1-1-1-1-1
-		@ 9: 0-1-1-0-0-1-1-1
-		@ A und B setzen
+              @ Segment '1' is the far left segment
+              @ Parse counter and set the segments
+              @ Bit values for things:
+              @ 0: 0-1-1-1-0-1-1-1
+              @ 1: 0-0-0-0-0-1-1-0
+              @ 2: 0-1-0-1-1-0-1-1
+              @ 3: 0-1-0-0-1-1-1-1
+              @ 4: 0-1-1-0-0-1-1-0
+              @ 5: 0-1-1-0-1-1-0-1
+              @ 6: 0-1-1-1-1-1-0-1
+              @ 7: 0-0-0-0-0-1-1-1
+              @ 8: 0-1-1-1-1-1-1-1
+              @ 9: 0-1-1-0-0-1-1-1
+              @ A und B setzen
 
-		@ nSRCLR auf HIGH setzen -> Warten auf Werte
+              @ nSRCLR auf HIGH setzen -> Warten auf Werte
 
-		@ Push bits into register according to the wished number
-			@ SER set to the bits value
+              @ Push bits into register according to the wished number
+                     @ SER set to the bits value
 
-			@ SRCLK rising edge to confirm the value and to push
+                     @ SRCLK rising edge to confirm the value and to push
 
-		@ RCLK rising edge to confirm bits
+              @ RCLK rising edge to confirm bits
 
-		@ nSRCLK set to low again so it knows we are done
+              @ nSRCLK set to low again so it knows we are done
 
 
 @ --------------------------------------------------------------------------------------------------------------------
