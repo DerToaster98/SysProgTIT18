@@ -755,8 +755,8 @@ increment_counter:
               str              r1, [GPIOREG, #0x1C]
               str              r1, [GPIOREG, #0x28]
 
-			  mov              r1, #0xC0                    @sets A and B to high, they are bit 7 and 8 ->       11000000
-              str              r1, [GPIOREG, #0x1C]
+			  mov              r1, #0xC0                    @sets A and B to low, they are bit 7 and 8 ->       11000000
+              str              r1, [GPIOREG, #0x28]
 
               mov              r1, #0x20					@Bit 5 setzen -> RCLK
               str              r1, [GPIOREG, #0x1C]
