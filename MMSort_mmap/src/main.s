@@ -557,6 +557,7 @@ increment_counter:
 		add		r1, #1
 		str		r1, =mm_counter
 		pop 	{r1}
+		bx 		lr
 
 @ -----------------------------------------------------------------------------
 @ Sets counter to 0
