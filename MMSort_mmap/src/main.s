@@ -409,7 +409,7 @@ init_outlet:
 init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
-        bqe init_outlet_loop_while_detected @ if detected, move to next loop
+        beq init_outlet_loop_while_detected @ if detected, move to next loop
  	bl move_outlet_steps    @ Hall sensor doesn't detect outlet
         b init_outlet_loop_until_detected
 
