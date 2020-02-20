@@ -403,7 +403,7 @@ init_interrupt:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-init_outlet:
+init_outlet: @ TODO Centre properly
         push {r1, r2, lr}
         mov r1, #1                
 
@@ -423,7 +423,7 @@ init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do tur
         b init_outlet_loop_while_detected
 
 init_outlet_exit:
-        mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
+        mov SNORKEL, #20          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
 
 
@@ -649,7 +649,7 @@ step_delay_loop:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-advance_colourwheel:
+advance_colourwheel: @ TODO Centre properly
         push {r1, r2, lr}         @ for (int i = 0; i < 200 || sensor == 1; ++i)
        mov r1, #0                @ r1: i
         mov r2, #0x00002000       @ Bit to toggle for step motor
