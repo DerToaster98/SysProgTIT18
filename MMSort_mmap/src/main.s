@@ -44,16 +44,16 @@
         .equ    orange, 0
 
               @Bits for the numbers on the seven segment display, they are already in the right order
-        .equ       bits_nmbr_0, 0x77        @01110111
-        .equ       bits_nmbr_1, 0x6         @00000110
-        .equ       bits_nmbr_2, 0x5B       @01011011
-        .equ       bits_nmbr_3, 0x4F       @01001111
-              .equ       bits_nmbr_4, 0x66       @01100110
-              .equ       bits_nmbr_5, 0x6D       @01101101
-              .equ       bits_nmbr_6, 0x7D       @01111101
-              .equ       bits_nmbr_7, 0x7       @00000111
-              .equ       bits_nmbr_8, 0x7F       @01111111
-              .equ       bits_nmbr_9, 0x67       @01100111
+         .equ       bits_nmbr_0, 0x77        @01110111
+         .equ       bits_nmbr_1, 0x6         @00000110
+         .equ       bits_nmbr_2, 0x5B       @01011011
+         .equ       bits_nmbr_3, 0x4F       @01001111
+         .equ       bits_nmbr_4, 0x66       @01100110
+         .equ       bits_nmbr_5, 0x6D       @01101101
+         .equ       bits_nmbr_6, 0x7D       @01111101
+         .equ       bits_nmbr_7, 0x7       @00000111
+         .equ       bits_nmbr_8, 0x7F       @01111111
+         .equ       bits_nmbr_9, 0x67       @01100111
 
 SNORKEL .req      r4
 TMPREG  .req      r5
@@ -373,11 +373,10 @@ init_gpio:
 @ -----------------------------------------------------------------------------
 
 wait_button_start:
-        push {lr}
         ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
         tst r2, #0x80     @ Bit 8 is set, --> button not pressed
         beq wait_button_start
-        popne {pc}
+        bxne lr
 
 @ -----------------------------------------------------------------------------
 @ Sets the button interrupt up
