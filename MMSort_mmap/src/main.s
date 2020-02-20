@@ -282,7 +282,18 @@ mainloop:
         mov r1, r6
         bl move_outlet_steps
         b mainloop_exit
+        
 mainloop_loop:
+        @ldr r1, =active
+        beq mainloop_exit
+
+        mov r1, 0x00080000        @ r1: Feeder bit
+        str r1, [GPIOREG, #0x1C]  @ Turn on feeder
+        
+        str r1, [GPIOREG, #0x28]  @ Turn off feeder
+
+        b mainloop_loop
+
 mainloop_exit:
         pop {pc}
 
@@ -331,7 +342,7 @@ init_gpio:
         str r1, [GPIOREG, #8]
 
         mov r1, #0x08000000      @ Sets Co-Processor nSLP, so it wakes up
-        orr r1, #0x000A0000      @ Sets Feeder to activate turning the feeder and sets coulorwheel nRST
+        orr r1, #0x00020000      @ Sets coulorwheel nRST
         orr r1, #0x00000800      @ Sets Outlet nRST
         str r1, [GPIOREG, #0x1C] @ Write to Set-GPIO register
 
@@ -488,7 +499,7 @@ color_red:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-step_delay:
+step_delay: @ TODO implement with hardware timer
         push {r1, lr}
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
 step_delay_loop:
