@@ -683,8 +683,8 @@ advance_colourwheel_loop:
         add r1, #1                @ if i < 50 continue, else check if hall sensor detects
         cmp r1, #200
         blt advance_colourwheel_loop
-        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
-        tst r2, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
+        ldr r3, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+        tst r3, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
         pop {r1, r2, pc}
 
