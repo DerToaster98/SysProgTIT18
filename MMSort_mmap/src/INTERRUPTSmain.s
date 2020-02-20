@@ -1,11 +1,11 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @@@     main.s
 @@@ ---------------------------------------------------------------------------
-@@@     author:  Lisa Binkert, Nikolai Klatt, Samuel Rundel, Oliver Seiler, Patrick Sewell
+@@@     author:  ...
 @@@     target:  Raspberry Pi
 @@@     project: MM-Sorting-Machine
-@@@     date:    2020/02/20
-@@@     version: 0.1
+@@@     date:    YYYY/MM/DD
+@@@     version: ...
 @@@ ---------------------------------------------------------------------------
 @@@ This program controls the MM-Sorting-Machine by reading two inputs,
 @@@ controlling the motors(, serving the 7-segment display) and interacting
@@ -43,22 +43,11 @@
         .equ    brown, 336
         .equ    orange, 0
 
-              @Bits for the numbers on the seven segment display, they are already in the right order
-         .equ       bits_nmbr_0, 0x77        @01110111
-         .equ       bits_nmbr_1, 0x6         @00000110
-         .equ       bits_nmbr_2, 0x5B       @01011011
-         .equ       bits_nmbr_3, 0x4F       @01001111
-         .equ       bits_nmbr_4, 0x66       @01100110
-         .equ       bits_nmbr_5, 0x6D       @01101101
-         .equ       bits_nmbr_6, 0x7D       @01111101
-         .equ       bits_nmbr_7, 0x7       @00000111
-         .equ       bits_nmbr_8, 0x7F       @01111111
-         .equ       bits_nmbr_9, 0x67       @01100111
 
 SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
-IRQREG       .req         r7
+IRQREG	.req	  r7
 WAITREG .req      r8
 RLDREG  .req      r9
 GPIOREG .req      r10
@@ -96,7 +85,10 @@ timerir_mmap_fd:
         .word     0
 
 mm_counter:
-              .word         0
+		.word	  0
+
+active:
+		.word     0
 
 @ - END OF DATA SECTION @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -132,6 +124,11 @@ mm_counter:
 @   return:    none
 @ -----------------------------------------------------------------------------
 main:
+		@Init IRQ-ISR
+		ldr pc, _interrupt_vector_h
+
+_interrupt_vector_h:		.word   irq
+
         ldr r0, =IntroMsg
         bl  printf
 
@@ -248,8 +245,8 @@ hw_init:
         ldr       r1, =gpio_mmap_adr          @ reload the addr for accessing the GPIOs
         ldr       GPIOREG, [r1]
 
-        ldr          r1, =timerir_mmap_adr                @ reload the addr for accessing the Interrupts
-        ldr                IRQREG, [r1]
+        ldr 	  r1, =timerir_mmap_adr		  @ reload the addr for accessing the Interrupts
+        ldr		  IRQREG, [r1]
 
         bl init_gpio
 
@@ -257,16 +254,45 @@ hw_init:
 
         bl init_outlet
 
-        bl init_leds
-
-        bl wait_button_start
-
         bl mainloop
-
-        bl turn_off
 
         b end_of_app
 
+@ PLEASE IGNORE START
+
+turn_color_wheel:
+		mov r1, #400
+
+loop_cw:
+		@13. Bit setzen und resetten -> Color Wheel Step
+		mov r2, #0x02000
+		@Setzen
+		str r2, [GPIOREG, #0x1C]
+		bl delay
+		mov r2, #0x02000
+		@Reset
+		str r2, [GPIOREG, #0x28]
+    bl delay
+		sub r1, #1
+		cmp r1, #0
+		beq	turn_out_wheel
+		b loop_cw
+
+	turn_out_wheel:
+
+        @b move_snorkel_color
+
+
+delay: push {r1}
+       mov r1,#0
+delay_loop:
+       add r1,#1
+       cmp r1, #0x2D0000
+       blt delay_loop
+       pop {r1}
+       bx lr
+
+@ PLEASE IGNORE END
 
 @ -----------------------------------------------------------------------------
 @ Main loop
@@ -274,46 +300,13 @@ hw_init:
 @   return:    none
 @ -----------------------------------------------------------------------------
 mainloop:
-        push {lr}
-        bl advance_colourwheel
         mov r6, #red
         bl move_snorkel_color
-        mov r1, r6
+        mov r6, r1
         bl move_outlet_steps
-        b mainloop_exit
-        
-        mov r1, #0x00080000        @ r1: Feeder bit
 mainloop_loop:
-        ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
-        tst r2, #0x100     @ Bit 8 is set, --> button not pressed
-        beq mainloop_exit         @ if button pressed, exit
-
-        str r1, [GPIOREG, #0x1C]  @ Turn on feeder
-mainloop_fetch_mm:
-        mov RETREG, #0xFF000000   @ If colour is NA, r6 is left unchanged, thus NA = 0xFF000000
-        bl get_colour
-        cmp RETREG, #0xFF000000
-        bne mainloop_fetch_mm_end
-        bl advance_colourwheel
-        @bl step_delay            @ Give the colour sensor time to think
-        b mainloop_fetch_mm
-mainloop_fetch_mm_end:
-        str r1, [GPIOREG, #0x28]  @ Turn off feeder
-
-        mov r1, RETREG            @ r1: Colour
-        bl show_led
-        bl move_snorkel_color
-        mov r1, RETREG            @ r1: Steps to move
-        bl move_outlet_steps      @ Position outlet
-
-        bl advance_colourwheel
-
-        bl increment_counter
-
-        b mainloop_loop
-
 mainloop_exit:
-        pop {pc}
+        b end_of_app
 
 @ -----------------------------------------------------------------------------
 @ Sets up GPIOs for later use
@@ -360,23 +353,11 @@ init_gpio:
         str r1, [GPIOREG, #8]
 
         mov r1, #0x08000000      @ Sets Co-Processor nSLP, so it wakes up
-        orr r1, #0x00020000      @ Sets colourwheel nRST
+        orr r1, #0x000A0000      @ Sets Feeder to activate turning the feeder and sets coulorwheel nRST
         orr r1, #0x00000800      @ Sets Outlet nRST
         str r1, [GPIOREG, #0x1C] @ Write to Set-GPIO register
 
         bx lr
-
-@ -----------------------------------------------------------------------------
-@ Pooling function for the start_button. Afther the button was pressed the mail loop will be started
-@   param:     none
-@   return:    none
-@ -----------------------------------------------------------------------------
-
-wait_button_start:
-        ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
-        tst r2, #0x100     @ Bit 8 is set, --> button not pressed
-        beq wait_button_start
-        bxne lr
 
 @ -----------------------------------------------------------------------------
 @ Sets the button interrupt up
@@ -384,22 +365,55 @@ wait_button_start:
 @   return:    none
 @ -----------------------------------------------------------------------------
 init_interrupt:
-               @ Activate Falling Edge Detection for GPIO 9
+		 @ Activate Falling Edge Detection for GPIO 9
         mov r1, #0x00400000
-        str r1, [GPIOREG, #0x58]       @bit 10 to 1 in GPFEN0
+        str r1, [GPIOREG, #0x58]	@bit 10 to 1 in GPFEN0
 
         @ Clear Pending bit for GPIO 9
         mov r1, #0
-        str r1, [GPIOREG, #0x40]       @bit 10 to 0 in GPEDS0
+        str r1, [GPIOREG, #0x40]	@bit 10 to 0 in GPEDS0
 
         @ Set Interrupt Enable bit for GPIO 9
         mov r1, #0x00008000
-        str r1, [IRQREG, #0x214]       @bit 17 to 1 in IRQ enable 2
+        str r1, [IRQREG, #0x214]	@bit 17 to 1 in IRQ enable 2
 
         bx lr
 
+irq:
+		@ TODO: Interrupt Service Routine
+		push {r1-r12, lr}
+
+		mov r1, #0 					@Disable Interrupt
+		str r1, [IRQREG, #0x214]
+
+		ldr r1, active
+		cmp r1, #0
+		bgt turn_on
+
+turn_off:
+		mov r1, #0
+		str r1, active
+		str r1, mm_count
+
+		bl turn_off_counter
+
+		b exit
+
+turn_on:
+		mov r1, #1
+		str r1, active
+
+		bl turn_on_counter
+
+exit:
+		mov r1, #0x00008000
+        str r1, [IRQREG, #0x214]	@bit 17 to 1 in IRQ enable 2
+
+		pop {r1-r12, pc}
+		bx lr
+
 @ -----------------------------------------------------------------------------
-@ Moves the outlet to a known position and sets SNORKEL
+@ Moves the outlet to its default position
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
@@ -407,72 +421,20 @@ init_outlet:
         push {r1, r2, lr}
         mov r1, #1                
 
-init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
+init_outlet_loop1:                @ while !outlet.detected_by(hall_sensor) do turn
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
-        tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
-        beq init_outlet_loop_while_detected @ if detected, move to next loop
-        bl move_outlet_steps    @ Hall sensor doesn't detect outlet
-        b init_outlet_loop_until_detected
+ 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+ 	blne move_outlet_steps    @ Hall sensor doesn't detect outlet
+        bne init_outlet_loop1
 
-init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do turn 
+init_outlet_loop2:                @ while outlet.detected_by(hall_sensor) do turn backwards
                                   @ (ensures the outlet is on the edge of the sensors detection range)
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
-        tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
-        bne init_outlet_exit      @ if not detected any more, exit
-        bl move_outlet_steps      @ Hall sensor detects outlet
-        b init_outlet_loop_while_detected
-
-init_outlet_exit:
+ 	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
+ 	bleq move_outlet_steps    @ Hall sensor detects outlet
+        beq init_outlet_loop2
         mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
-
-
-init_leds:
-        push {GPIOREG, lr}
-
-        bl WS2812RPi_Init
-
-        mov r0, #100
-        bl WS2812RPi_SetBrightness
-
-        mov r0, #1                @ Sets orange LED (ifm-orange)
-        mov r1, #0xFF0000
-        orr r1, #0x009600
-        orr r1, #0x000000
-        bl WS2812RPi_SetSingle
-
-        mov r0, #2                @ Sets yellow LED (dhl-yellow)
-        mov r1, #0xFF0000
-        orr r1, #0x00CC00
-        orr r1, #0x000000
-        bl WS2812RPi_SetSingle
-
-        mov r0, #3                @ Sets green LED (nvidia-green)
-        mov r1, #0x760000
-        orr r1, #0x00B900
-        orr r1, #0x000000
-        bl WS2812RPi_SetSingle
-
-        mov r0, #4                @ Sets blue LED (google-blue)
-        mov r1, #0x420000
-        orr r1, #0x008500
-        orr r1, #0x0000F4
-        bl WS2812RPi_SetSingle
-
-        mov r0, #5                @ Sets red LED (edag-red)
-        mov r1, #0xD70000
-        orr r1, #0x001900
-        orr r1, #0x000046
-        bl WS2812RPi_SetSingle
-
-        mov r0, #6                @ Sets brown LED (m&m-brown)
-        mov r1, #0x5B0000
-        orr r1, #0x003500
-        orr r1, #0x00002D
-        bl WS2812RPi_SetSingle
-
-        pop {GPIOREG, pc}
-
 
 @ -----------------------------------------------------------------------------
 @ Move the outlet the specified number of steps (updates SNORKEL (position))
@@ -501,12 +463,11 @@ move_outlet_steps_exit:
 
 @ -----------------------------------------------------------------------------
 @ Gets the difference between the current postition (SNORKEL) and the wanted Position (given from the get_color)
-@   param:     r1 --> the wanted position
-@   return:    r6 --> the needed amount of steps between current position and wanted position
+@   param:     r6 --> the wanted position
+@   return:     r6 --> the needed amount of steps between current position and wanted position
 @ -----------------------------------------------------------------------------
 move_snorkel_color:
         push {r0, r2, lr}
-        mov r6, r1
         cmp SNORKEL, r6
         beq move_snorkel_color_end                                   @ The snorkel is already on the wanted position.
         bgt move_snorkel_color_backwards                         @ The snorkel is too far. a full turn is required
@@ -515,12 +476,12 @@ move_snorkel_color:
 move_snorkel_color_backwards:
         add r6, #400
         sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        @bl move_outlet_steps
+        bl move_outlet_steps
         b move_snorkel_color_end
 
 move_snorkel_color_forwards:
         sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        @bl move_outlet_steps
+        bl move_outlet_steps
         b move_snorkel_color_end
 
 move_snorkel_color_end:
@@ -533,108 +494,14 @@ move_snorkel_color_end:
 @ -----------------------------------------------------------------------------
 get_colour:
         @ TODO
-              ldr  r1,[GPIOREG, #0x34]
-              tst  r1,#0x0400000    @Is Color red?
-              bne color_red
-
-              tst  r1,#0x0800000    @Is Color green?
-              bne color_green
-
-              tst  r1,#0x0C00000    @Is Color blue?
-              bne  color_blue
-
-              tst  r1,#0x1000000    @Is Color brown?
-              bne  color_brown
-
-              tst  r1,#0x1400000    @Is Color orange?
-              bne  color_orange
-
-              tst  r1,#0x1800000    @Is Color yellow?
-              bne color_yellow
-
         bx lr
-
-color_yellow:
-           mov RETREG,#yellow
-              bx lr
-color_orange:
-              mov RETREG,#orange
-              bx lr
-color_brown:
-              mov RETREG,#brown
-              bx lr
-color_blue:
-              mov RETREG,#blue
-              bx lr
-color_green:
-              mov RETREG,#green
-              bx lr
-color_red:
-              mov RETREG,#red
-              bx lr
-
-
-@ -----------------------------------------------------------------------------
-@ Shows the specified LED
-@   param:     r1 -> The colour as specified above
-@   return:    none
-@ -----------------------------------------------------------------------------
-show_led:
-        push {r1, r2, r3, SNORKEL, GPIOREG, lr}
-        cmp r1, #orange
-        beq show_led_orange
-        cmp r1, #yellow
-        beq show_led_yellow
-        cmp r1, #green
-        beq show_led_green
-        cmp r1, #blue
-        beq show_led_blue
-        cmp r1, #red
-        beq show_led_red
-        cmp r1, #brown
-        beq show_led_brown
-        bl WS2812RPi_AllOff
-
-show_led_exit:
-        bl WS2812RPi_Show
-        pop {r1, r2, r3, SNORKEL, GPIOREG, pc}
-   
-show_led_orange:
-        mov r0, #1
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
-   
-show_led_yellow:
-        mov r0, #2
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
-   
-show_led_green:
-        mov r0, #3
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
-   
-show_led_blue:
-        mov r0, #4
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
-   
-show_led_red:
-        mov r0, #5
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
-   
-show_led_brown:
-        mov r0, #6
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
 
 @ -----------------------------------------------------------------------------
 @ Delays execution by the time the step motor needs between edges
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-step_delay: @ TODO implement with hardware timer
+step_delay:
         push {r1, lr}
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
 step_delay_loop:
@@ -644,28 +511,14 @@ step_delay_loop:
         pop {r1, pc}
 
 @ -----------------------------------------------------------------------------
-@ Advances the colour wheel until on of its magnets are detected by the hall
-@ sensor but at least 200 steps
+@ Advances the colour wheel by a quarter revolution or until on of its magnets
+@ are detected by the hall sensor (but at least ... steps)
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
 advance_colourwheel:
-        push {r1, r2, lr}         @ for (int i = 0; i < 200 || sensor == 1; ++i)
-       mov r1, #0                @ r1: i
-        mov r2, #0x00002000       @ Bit to toggle for step motor
-
-advance_colourwheel_loop:
-        str r2, [GPIOREG, #0x1C]  @ Rising edge
-        bl step_delay
-        str r2, [GPIOREG, #0x28]  @ Falling edge
-        bl step_delay
-        add r1, #1                @ if i < 50 continue, else check if hall sensor detects
-        cmp r1, #200
-        blt advance_colourwheel_loop
-        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
-        tst r2, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
-        bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
-        pop {r1, r2, pc}
+        @ TODO
+        bx lr
 
 @ -----------------------------------------------------------------------------
 @ Turns off stuff that needs turning off
@@ -674,14 +527,10 @@ advance_colourwheel_loop:
 @ -----------------------------------------------------------------------------
 turn_off:
         push {r1, lr}
-        
         mov r1, #0x08000000      @ Resets Co-Processor nSLP, so it goes to sleep
         orr r1, #0x000A0000      @ Resets Feeder to activate turning the feeder and resets coulourwheel nRST
         orr r1, #0x00000800      @ Resets Outlet nRST
         str r1, [GPIOREG, #0x28] @ Write to Reset-GPIO register
-
-        bl WS2812RPi_DeInit
-        
         pop {r1, pc}
 
 @ -----------------------------------------------------------------------------
@@ -690,83 +539,12 @@ turn_off:
 @   return:    none
 @ -----------------------------------------------------------------------------
 increment_counter:
-              @ DONE: Increment counter number by one
-              push        {r1, r2}
-              ldr        r2, =mm_counter
-              ldr              r1, [r2]
-              add              r1, #1
-              str              r1, [r2]
-              pop        {r1, r2}
-
-              @Temporary code for displaying ###4 on the display
-              @push       {r1}
-              @mov              r1, #0x10                     @sets nSRCLR to high, its the 5th bit in the bit mask -> 10000
-              @str        r1, [GPIOREG, #0x1C]
-              @mov              r1, #0xC0                     @sets A and B to high, they are bit 7 and 8 ->       11000000
-              @str              r1, [GPIOREG, #0x1C]
-              @
-              @push       {r2}
-              @
-              @mov              r2, #0x4
-              @str              r2, [GPIOREG, #0x1C]
-              @
-              @@Rising edge on SRCLK
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @mov              r1, #0x20
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @pop              {r2}
-              @pop              {r1}
-
-              bx               lr
+		@ TODO: Increment counter number by one
+		push 	{r1}
+		ldr 	r1, =mm_counter
+		add		r1, #1
+		str		r1, =mm_counter
+		pop 	{r1}
 
 @ -----------------------------------------------------------------------------
 @ Sets counter to 0
@@ -774,7 +552,7 @@ increment_counter:
 @   return:    none
 @ -----------------------------------------------------------------------------
 turn_off_counter:
-              @ TODO: Reset counter to 0
+		@ TODO: Reset counter to 0
 
 @ -----------------------------------------------------------------------------
 @ Initializes counter and number display and displays the current number
@@ -782,31 +560,38 @@ turn_off_counter:
 @   return:    none
 @ -----------------------------------------------------------------------------
 turn_on_counter:
-              @ Segment '1' is the far left segment
-              @ Parse counter and set the segments
-              @ Bit values for things:
-              @ 0: 0-1-1-1-0-1-1-1
-              @ 1: 0-0-0-0-0-1-1-0
-              @ 2: 0-1-0-1-1-0-1-1
-              @ 3: 0-1-0-0-1-1-1-1
-              @ 4: 0-1-1-0-0-1-1-0
-              @ 5: 0-1-1-0-1-1-0-1
-              @ 6: 0-1-1-1-1-1-0-1
-              @ 7: 0-0-0-0-0-1-1-1
-              @ 8: 0-1-1-1-1-1-1-1
-              @ 9: 0-1-1-0-0-1-1-1
-              @ A und B setzen
+		@ Segment '1' is the far left segment
+		@ Parse counter and set the segments
+		@ Bit values for things:
+		@ 0: 0-1-1-1-0-1-1-1
+		@ 1: 0-0-0-0-0-1-1-0
+		@ 2: 0-1-0-1-1-0-1-1
+		@ 3: 0-1-0-0-1-1-1-1
+		@ 4: 0-1-1-0-0-1-1-0
+		@ 5: 0-1-1-0-1-1-0-1
+		@ 6: 0-1-1-1-1-1-0-1
+		@ 7: 0-0-0-0-0-1-1-1
+		@ 8: 0-1-1-1-1-1-1-1
+		@ 9: 0-1-1-0-0-1-1-1
+		@ A und B setzen
 
-              @ nSRCLR auf HIGH setzen -> Warten auf Werte
+		@ nSRCLR auf HIGH setzen -> Warten auf Werte
 
-              @ Push bits into register according to the wished number
-                     @ SER set to the bits value
+		@ Push bits into register according to the wished number
+			@ SER set to the bits value
 
-                     @ SRCLK rising edge to confirm the value and to push
+			@ SRCLK rising edge to confirm the value and to push
 
-              @ RCLK rising edge to confirm bits
+		@ RCLK rising edge to confirm bits
 
-              @ nSRCLK set to low again so it knows we are done
+		@ nSRCLK set to low again so it knows we are done
+
+@ -----------------------------------------------------------------------------
+@ Turns off stuff that needs turning off
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+
 
 
 @ --------------------------------------------------------------------------------------------------------------------
