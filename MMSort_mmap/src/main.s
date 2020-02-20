@@ -439,7 +439,49 @@ move_snorkel_color_end:
 @ -----------------------------------------------------------------------------
 get_colour:
         @ TODO
-        bx lr
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x0400000    @Is Color red?
+       	beq color_red
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x0800000    @Is Color green?
+       	beq color_green
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x0C00000    @Is Color blue?
+       	beq  color_blue
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x1000000    @Is Color brown?
+       	beq  color_brown
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x1400000    @Is Color orange?
+       	beq  color_orange
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x1800000    @Is Color yellow?
+       	beq color_yellow
+
+	    bx lr
+color_yellow:
+    	mov RETREG,#yellow
+       	bx lr
+color_orange:
+       	mov RETREG,#orange
+       	bx lr
+color_brown:
+       	mov RETREG,#brown
+       	bx lr
+color_blue:
+       	mov RETREG,#blue
+       	bx lr
+color_green:
+       	mov RETREG,#green
+       	bx lr
+color_red:
+       	mov RETREG,#red
+       	bx lr
 
 @ -----------------------------------------------------------------------------
 @ Delays execution by the time the step motor needs between edges
