@@ -261,13 +261,6 @@ hw_init:
 
         b end_of_app
 
-@ PLEASE IGNORE START
-
-
-
-        @b move_snorkel_color
-
-@ PLEASE IGNORE END
 
 @ -----------------------------------------------------------------------------
 @ Main loop
@@ -612,13 +605,6 @@ turn_on_counter:
 		@ RCLK rising edge to confirm bits
 
 		@ nSRCLK set to low again so it knows we are done
-
-@ -----------------------------------------------------------------------------
-@ Turns off stuff that needs turning off
-@   param:     none
-@   return:    none
-@ -----------------------------------------------------------------------------
-
 
 
 @ --------------------------------------------------------------------------------------------------------------------
