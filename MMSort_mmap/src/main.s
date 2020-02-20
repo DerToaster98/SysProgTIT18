@@ -699,72 +699,57 @@ increment_counter:
               pop        {r1, r2}
 
               @Temporary code for displaying ###4 on the display
-              @push       {r1}
-              @mov              r1, #0x10                     @sets nSRCLR to high, its the 5th bit in the bit mask -> 10000
-              @str        r1, [GPIOREG, #0x1C]
-              @mov              r1, #0xC0                     @sets A and B to high, they are bit 7 and 8 ->       11000000
-              @str              r1, [GPIOREG, #0x1C]
-              @
-              @push       {r2}
-              @
-              @mov              r2, #0x4
-              @str              r2, [GPIOREG, #0x1C]
-              @
-              @@Rising edge on SRCLK
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @str              r2, [GPIOREG, #0x1C]
-              @mov              r1, #0x8
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @mov              r1, #0x20
-              @str              r1, [GPIOREG, #0x1C]
-              @mov              r1, #0x0
-              @str              r1, [GPIOREG, #0x28]
-              @
-              @pop              {r2}
-              @pop              {r1}
+              push       {r1}
+              mov              r1, #0x10                     @sets nSRCLR to high, its the 5th bit in the bit mask -> 10000
+              str        r1, [GPIOREG, #0x1C]
+
+              push       {r2}
+
+              mov              r2, #0x4
+              str              r2, [GPIOREG, #0x1C]
+
+              @Rising edge on SRCLK
+              mov              r1, #0x8
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+			  mov              r1, #0xC0                    @sets A and B to high, they are bit 7 and 8 ->       11000000
+              str              r1, [GPIOREG, #0x1C]
+
+              mov              r1, #0x20					@Bit 5 setzen -> RCLK
+              str              r1, [GPIOREG, #0x1C]
+              str              r1, [GPIOREG, #0x28]
+
+              mov              r1, #0x10                    @sets nSRCLR to low, its the 5th bit in the bit mask -> 10000
+              str       	   r1, [GPIOREG, #0x28]
+
+
+              pop              {r2}
+              pop              {r1}
 
               bx               lr
 
