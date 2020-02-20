@@ -308,6 +308,8 @@ mainloop_fetch_mm_end:
 
         bl advance_colourwheel
 
+		bl increment_counter
+
         b mainloop_loop
 
 mainloop_exit:
