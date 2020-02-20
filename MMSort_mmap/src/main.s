@@ -280,7 +280,7 @@ mainloop:
         bl move_outlet_steps
         b mainloop_exit
         
-        mov r1, 0x00080000        @ r1: Feeder bit
+        mov r1, #0x00080000        @ r1: Feeder bit
 mainloop_loop:
         @ldr r1, =active
         mov r2, #1                @ while (true); For now ...
@@ -299,6 +299,7 @@ mainloop_fetch_mm_end:
         str r1, [GPIOREG, #0x28]  @ Turn off feeder
 
         mov r1, RETREG            @ r1: Colour
+        bl show_led
         bl move_snorkel_color
         mov r1, RETREG            @ r1: Steps to move
         bl move_outlet_steps      @ Position outlet
@@ -407,7 +408,7 @@ init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do tur
 
 
 init_leds:
-        push {lr}
+        push {GPIOREG, lr}
 
         bl WS2812RPi_Init
 
@@ -450,7 +451,7 @@ init_leds:
         orr r1, #0x00002D
         bl WS2812RPi_SetSingle
 
-        pop {pc}
+        pop {GPIOREG, pc}
 
 
 @ -----------------------------------------------------------------------------
@@ -551,6 +552,62 @@ color_green:
 color_red:
        	mov RETREG,#red
        	bx lr
+
+
+@ -----------------------------------------------------------------------------
+@ Shows the specified LED
+@   param:     r1 -> The colour as specified above
+@   return:    none
+@ -----------------------------------------------------------------------------
+show_led:
+        push {r1, r2, r3, SNORKEL, GPIOREG, lr}
+        cmp r1, #orange
+        beq show_led_orange
+        cmp r1, #yellow
+        beq show_led_yellow
+        cmp r1, #green
+        beq show_led_green
+        cmp r1, #blue
+        beq show_led_blue
+        cmp r1, #red
+        beq show_led_red
+        cmp r1, #brown
+        beq show_led_brown
+        bl WS2812RPi_AllOff
+
+show_led_exit:
+        bl WS2812RPi_Show
+        pop {r1, r2, r3, SNORKEL, GPIOREG, pc}
+   
+show_led_orange:
+        mov r0, #1
+        bl WS2812RPi_SetOthersOff
+        b show_led_exit
+   
+show_led_yellow:
+        mov r0, #2
+        bl WS2812RPi_SetOthersOff
+        b show_led_exit
+   
+show_led_green:
+        mov r0, #3
+        bl WS2812RPi_SetOthersOff
+        b show_led_exit
+   
+show_led_blue:
+        mov r0, #4
+        bl WS2812RPi_SetOthersOff
+        b show_led_exit
+   
+show_led_red:
+        mov r0, #5
+        bl WS2812RPi_SetOthersOff
+        b show_led_exit
+   
+show_led_brown:
+        mov r0, #6
+        bl WS2812RPi_SetOthersOff
+        b show_led_exit
 
 @ -----------------------------------------------------------------------------
 @ Delays execution by the time the step motor needs between edges
