@@ -43,6 +43,17 @@
         .equ    brown, 336
         .equ    orange, 0
 
+		@Bits for the numbers on the seven segment display, they are already in the right order
+        .equ	bits_nmbr_0, 0x77 	@01110111
+        .equ	bits_nmbr_1, 0x6  	@00000110
+        .equ	bits_nmbr_2, 0x5B	@01011011
+        .equ	bits_nmbr_3, 0x4F	@01001111
+		.equ	bits_nmbr_4, 0x66	@01100110
+		.equ	bits_nmbr_5, 0x6D	@01101101
+		.equ	bits_nmbr_6, 0x7D	@01111101
+		.equ	bits_nmbr_7, 0x7	@00000111
+		.equ	bits_nmbr_8, 0x7F	@01111111
+		.equ	bits_nmbr_9, 0x67	@01100111
 
 SNORKEL .req      r4
 TMPREG  .req      r5
@@ -439,7 +450,49 @@ move_snorkel_color_end:
 @ -----------------------------------------------------------------------------
 get_colour:
         @ TODO
-        bx lr
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x0400000    @Is Color red?
+       	beq color_red
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x0800000    @Is Color green?
+       	beq color_green
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x0C00000    @Is Color blue?
+       	beq  color_blue
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x1000000    @Is Color brown?
+       	beq  color_brown
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x1400000    @Is Color orange?
+       	beq  color_orange
+
+       	ldr  r1,[GPIOREG, #0x34]
+       	tst  r1,#0x1800000    @Is Color yellow?
+       	beq color_yellow
+
+	    bx lr
+color_yellow:
+    	mov RETREG,#yellow
+       	bx lr
+color_orange:
+       	mov RETREG,#orange
+       	bx lr
+color_brown:
+       	mov RETREG,#brown
+       	bx lr
+color_blue:
+       	mov RETREG,#blue
+       	bx lr
+color_green:
+       	mov RETREG,#green
+       	bx lr
+color_red:
+       	mov RETREG,#red
+       	bx lr
 
 @ -----------------------------------------------------------------------------
 @ Delays execution by the time the step motor needs between edges
