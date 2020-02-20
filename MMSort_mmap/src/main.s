@@ -257,7 +257,11 @@ hw_init:
 
         bl init_outlet
 
+        bl init_leds
+
         bl mainloop
+
+        bl turn_off
 
         b end_of_app
 
@@ -378,7 +382,7 @@ init_interrupt:
         bx lr
 
 @ -----------------------------------------------------------------------------
-@ Moves the outlet to its default position
+@ Moves the outlet to a known position and sets SNORKEL
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
@@ -400,6 +404,54 @@ init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do tur
         beq init_outlet_loop_while_detected
         mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
+
+
+init_leds:
+        push {lr}
+
+        bl WS2812RPi_Init
+
+        mov r0, #100
+        bl WS2812RPi_SetBrightness
+
+        mov r0, #1                @ Sets orange LED (ifm-orange)
+        mov r1, #0xFF0000
+        orr r1, #0x009600
+        orr r1, #0x000000
+        bl WS2812RPi_SetSingle
+
+        mov r0, #2                @ Sets yellow LED (dhl-yellow)
+        mov r1, #0xFF0000
+        orr r1, #0x00CC00
+        orr r1, #0x000000
+        bl WS2812RPi_SetSingle
+
+        mov r0, #3                @ Sets green LED (nvidia-green)
+        mov r1, #0x760000
+        orr r1, #0x00B900
+        orr r1, #0x000000
+        bl WS2812RPi_SetSingle
+
+        mov r0, #4                @ Sets blue LED (google-blue)
+        mov r1, #0x420000
+        orr r1, #0x008500
+        orr r1, #0x0000F4
+        bl WS2812RPi_SetSingle
+
+        mov r0, #5                @ Sets red LED (edag-red)
+        mov r1, #0xD70000
+        orr r1, #0x001900
+        orr r1, #0x000046
+        bl WS2812RPi_SetSingle
+
+        mov r0, #6                @ Sets brown LED (m&m-brown)
+        mov r1, #0x5B0000
+        orr r1, #0x003500
+        orr r1, #0x00002D
+        bl WS2812RPi_SetSingle
+
+        pop {pc}
+
 
 @ -----------------------------------------------------------------------------
 @ Move the outlet the specified number of steps (updates SNORKEL (position))
@@ -545,10 +597,14 @@ advance_colourwheel_loop:
 @ -----------------------------------------------------------------------------
 turn_off:
         push {r1, lr}
+        
         mov r1, #0x08000000      @ Resets Co-Processor nSLP, so it goes to sleep
         orr r1, #0x000A0000      @ Resets Feeder to activate turning the feeder and resets coulourwheel nRST
         orr r1, #0x00000800      @ Resets Outlet nRST
         str r1, [GPIOREG, #0x28] @ Write to Reset-GPIO register
+
+        bl WS2812RPi_DeInit
+        
         pop {r1, pc}
 
 @ -----------------------------------------------------------------------------
