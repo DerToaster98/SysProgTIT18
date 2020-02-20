@@ -409,15 +409,19 @@ init_outlet:
 init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
- 	blne move_outlet_steps    @ Hall sensor doesn't detect outlet
-        bne init_outlet_loop_until_detected
+        bqe init_outlet_loop_while_detected @ if detected, move to next loop
+ 	bl move_outlet_steps    @ Hall sensor doesn't detect outlet
+        b init_outlet_loop_until_detected
 
 init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do turn 
                                   @ (ensures the outlet is on the edge of the sensors detection range)
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
- 	bleq move_outlet_steps    @ Hall sensor detects outlet
-        beq init_outlet_loop_while_detected
+        bne init_outlet_exit      @ if not detected any more, exit
+ 	bl move_outlet_steps      @ Hall sensor detects outlet
+        b init_outlet_loop_while_detected
+
+init_outlet_exit
         mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
 
