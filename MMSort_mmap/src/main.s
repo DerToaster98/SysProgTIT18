@@ -565,11 +565,12 @@ turn_off:
 @ -----------------------------------------------------------------------------
 increment_counter:
 		@ TODO: Increment counter number by one
-		push 	{r1}
-		ldr 	r1, =mm_counter
+		push 	{r1, r2}
+		ldr 	r2, =mm_counter
+		ldr		r1, [r2]
 		add		r1, #1
-		str		r1, =mm_counter
-		pop 	{r1}
+		str		r1, [r2]
+		pop 	{r1, r2}
 		bx 		lr
 
 @ -----------------------------------------------------------------------------
