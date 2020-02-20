@@ -264,13 +264,16 @@ hw_init:
 @   return:    none
 @ -----------------------------------------------------------------------------
 mainloop:
+        push {lr}
+        bl advance_colourwheel
         mov r6, #red
         bl move_snorkel_color
         mov r1, r6
         bl move_outlet_steps
+        b mainloop_exit
 mainloop_loop:
 mainloop_exit:
-        bx lr
+        pop {pc}
 
 @ -----------------------------------------------------------------------------
 @ Sets up GPIOs for later use
@@ -448,8 +451,8 @@ step_delay_loop:
 @   return:    none
 @ -----------------------------------------------------------------------------
 advance_colourwheel:
-        push {r1, r2, lr}
-	mov r1, #0               @ Loop counter
+        push {r1, r2, lr}         @ for (int i = 0; i < 50 || sensor == 1; ++i)
+	mov r1, #0                @ r1: i
         mov r2, #0x00002000       @ Bit to toggle for step motor
 
 advance_colourwheel_loop:
@@ -463,7 +466,7 @@ advance_colourwheel_loop:
         ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
  	tst r2, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
  	bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
-        pop {r1, r2, r3, lr}
+        pop {r1, r2, lr}
 
 @ -----------------------------------------------------------------------------
 @ Turns off stuff that needs turning off
