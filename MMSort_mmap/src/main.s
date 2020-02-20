@@ -285,7 +285,7 @@ mainloop:
         mov r1, #0x00080000        @ r1: Feeder bit
 mainloop_loop:
         ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
-        tst r2, #0x80     @ Bit 8 is set, --> button not pressed
+        tst r2, #0x100     @ Bit 8 is set, --> button not pressed
         beq mainloop_exit         @ if button pressed, exit
 
         str r1, [GPIOREG, #0x1C]  @ Turn on feeder
@@ -374,7 +374,7 @@ init_gpio:
 
 wait_button_start:
         ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
-        tst r2, #0x80     @ Bit 8 is set, --> button not pressed
+        tst r2, #0x100     @ Bit 8 is set, --> button not pressed
         beq wait_button_start
         bxne lr
 
