@@ -403,7 +403,7 @@ init_interrupt:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-init_outlet:
+init_outlet: @ TODO Centre properly
         push {r1, r2, lr}
         mov r1, #1                
 
@@ -423,7 +423,7 @@ init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do tur
         b init_outlet_loop_while_detected
 
 init_outlet_exit:
-        mov SNORKEL, #32          @ Set position to 32 (edge of hall sensor detection)
+        mov SNORKEL, #20          @ Set position to 32 (edge of hall sensor detection)
         pop {r1, r2, pc}
 
 
@@ -643,13 +643,30 @@ step_delay_loop:
         blt step_delay_loop
         pop {r1, pc}
 
+
+@ step_delay: @ TODO implement with hardware timer
+@         @hardware timer offset: TIMERIR_OFFSET
+@         push {r1, lr}
+@         mov r1, [TIMERIR_OFFSET, #0x4]
+@         tst r1, #FFFFFFFF
+@         moveq r1, [TIMERIR_OFFSET, #0x8]
+@         add r1, #0x2D0000
+@ step_delay_high:
+@         cmp r1, [TIMERIR_OFFSET, #0x4]
+@         blt step_delay_high
+@         pop {r1, pc}
+@ step_delay_low:
+@         cmp r1, [TIMERIR_OFFSET, #0x8]
+@         blt step_delay_low
+@         pop {r1, pc}
+
 @ -----------------------------------------------------------------------------
 @ Advances the colour wheel until on of its magnets are detected by the hall
 @ sensor but at least 200 steps
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-advance_colourwheel:
+advance_colourwheel: @ TODO Centre properly
         push {r1, r2, lr}         @ for (int i = 0; i < 200 || sensor == 1; ++i)
        mov r1, #0                @ r1: i
         mov r2, #0x00002000       @ Bit to toggle for step motor
