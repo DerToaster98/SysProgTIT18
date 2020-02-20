@@ -55,6 +55,9 @@
          .equ       bits_nmbr_8, 0x7F       @01111111
          .equ       bits_nmbr_9, 0x67       @01100111
 
+         .equ       set_pin_out, 0x1C
+         .equ       clear_pin_out, 0x28
+
 SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
@@ -288,7 +291,7 @@ mainloop_loop:
         tst r2, #0x100     @ Bit 8 is set, --> button not pressed
         beq mainloop_exit         @ if button pressed, exit
 
-        str r1, [GPIOREG, #0x1C]  @ Turn on feeder
+        str r1, [GPIOREG, #set_pin_out]  @ Turn on feeder
 mainloop_fetch_mm:
         mov RETREG, #0xFF000000   @ If colour is NA, r6 is left unchanged, thus NA = 0xFF000000
         bl get_colour
@@ -298,7 +301,7 @@ mainloop_fetch_mm:
         @bl step_delay            @ Give the colour sensor time to think
         b mainloop_fetch_mm
 mainloop_fetch_mm_end:
-        str r1, [GPIOREG, #0x28]  @ Turn off feeder
+        str r1, [GPIOREG, #clear_pin_out]  @ Turn off feeder
 
         mov r1, RETREG            @ r1: Colour
         bl show_led
@@ -362,7 +365,7 @@ init_gpio:
         mov r1, #0x08000000      @ Sets Co-Processor nSLP, so it wakes up
         orr r1, #0x00020000      @ Sets colourwheel nRST
         orr r1, #0x00000800      @ Sets Outlet nRST
-        str r1, [GPIOREG, #0x1C] @ Write to Set-GPIO register
+        str r1, [GPIOREG, #set_pin_out] @ Write to Set-GPIO register
 
         bx lr
 
@@ -487,9 +490,9 @@ move_outlet_steps:
 move_outlet_steps_loop:
         cmp r0, r1                @ continue if i < STEPS, else break loop
         bge move_outlet_steps_exit
-        str r2, [GPIOREG, #0x1C]  @ Rising edge
+        str r2, [GPIOREG, #set_pin_out]  @ Rising edge
         bl step_delay
-        str r2, [GPIOREG, #0x28]  @ Falling edge
+        str r2, [GPIOREG, #clear_pin_out]  @ Falling edge
         bl step_delay
         add r0, r0, #1
         b move_outlet_steps_loop
@@ -673,9 +676,9 @@ advance_colourwheel: @ TODO Centre properly
         mov r2, #0x00002000       @ Bit to toggle for step motor
 
 advance_colourwheel_loop:
-        str r2, [GPIOREG, #0x1C]  @ Rising edge
+        str r2, [GPIOREG, #set_pin_out]  @ Rising edge
         bl step_delay
-        str r2, [GPIOREG, #0x28]  @ Falling edge
+        str r2, [GPIOREG, #clear_pin_out]  @ Falling edge
         bl step_delay
         add r1, #1                @ if i < 50 continue, else check if hall sensor detects
         cmp r1, #200
@@ -696,7 +699,7 @@ turn_off:
         mov r1, #0x08000000      @ Resets Co-Processor nSLP, so it goes to sleep
         orr r1, #0x000A0000      @ Resets Feeder to activate turning the feeder and resets coulourwheel nRST
         orr r1, #0x00000800      @ Resets Outlet nRST
-        str r1, [GPIOREG, #0x28] @ Write to Reset-GPIO register
+        str r1, [GPIOREG, #clear_pin_out] @ Write to Reset-GPIO register
 
         bl WS2812RPi_DeInit
         
@@ -719,51 +722,51 @@ increment_counter:
               @Temporary code for displaying ###4 on the display
               push       {r1}
               mov              r1, #0x10                     @sets nSRCLR to high, its the 5th bit in the bit mask -> 10000
-              str        r1, [GPIOREG, #0x1C]
+              str        r1, [GPIOREG, #set_pin_out]
 
               push       {r2}
 
               mov              r2, #0x4
-              str              r2, [GPIOREG, #0x1C]
+              str              r2, [GPIOREG, #set_pin_out]
 
               @Rising edge on SRCLK
               mov              r1, #0x8
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
-			  mov              r1, #0xC0                    @sets A and B to low, they are bit 7 and 8 ->       11000000
-              str              r1, [GPIOREG, #0x28]
+	        mov              r1, #0xC0                    @sets A and B to high, they are bit 7 and 8 ->       11000000
+              str              r1, [GPIOREG, #clear_pin_out]
 
               mov              r1, #0x20					@Bit 5 setzen -> RCLK
-              str              r1, [GPIOREG, #0x1C]
-              str              r1, [GPIOREG, #0x28]
+              str              r1, [GPIOREG, #set_pin_out]
+              str              r1, [GPIOREG, #clear_pin_out]
 
               mov              r1, #0x10                    @sets nSRCLR to low, its the 5th bit in the bit mask -> 10000
-              str       	   r1, [GPIOREG, #0x28]
+              str       	   r1, [GPIOREG, #clear_pin_out]
 
 
               pop              {r2}
