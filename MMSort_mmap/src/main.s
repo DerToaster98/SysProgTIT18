@@ -259,6 +259,8 @@ hw_init:
 
         bl init_leds
 
+        bl wait_button_start
+
         bl mainloop
 
         bl turn_off
@@ -361,6 +363,19 @@ init_gpio:
         str r1, [GPIOREG, #0x1C] @ Write to Set-GPIO register
 
         bx lr
+
+@ -----------------------------------------------------------------------------
+@ Pooling function for the start_button. Afther the button was pressed the mail loop will be started
+@   param:     none
+@   return:    none
+@ -----------------------------------------------------------------------------
+
+wait_button_start:
+        push {lr}
+        ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
+ 	tst r2, #0x80     @ Bit 8 is set, --> button not pressed
+        beq wait_button_start
+        popne {pc}
 
 @ -----------------------------------------------------------------------------
 @ Sets the button interrupt up
