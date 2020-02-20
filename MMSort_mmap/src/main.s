@@ -1,11 +1,11 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @@@     main.s
 @@@ ---------------------------------------------------------------------------
-@@@     author:  ...
+@@@     author:  Lisa Binkert, Nikolai Klatt, Samuel Rundel, Oliver Seiler, Patrick Sewell
 @@@     target:  Raspberry Pi
 @@@     project: MM-Sorting-Machine
-@@@     date:    YYYY/MM/DD
-@@@     version: ...
+@@@     date:    2020/02/20
+@@@     version: 0.1
 @@@ ---------------------------------------------------------------------------
 @@@ This program controls the MM-Sorting-Machine by reading two inputs,
 @@@ controlling the motors(, serving the 7-segment display) and interacting
