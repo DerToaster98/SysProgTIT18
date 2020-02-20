@@ -643,6 +643,23 @@ step_delay_loop:
         blt step_delay_loop
         pop {r1, pc}
 
+
+@ step_delay: @ TODO implement with hardware timer
+@         @hardware timer offset: TIMERIR_OFFSET
+@         push {r1, lr}
+@         mov r1, [TIMERIR_OFFSET, #0x4]
+@         tst r1, #FFFFFFFF
+@         moveq r1, [TIMERIR_OFFSET, #0x8]
+@         add r1, #0x2D0000
+@ step_delay_high:
+@         cmp r1, [TIMERIR_OFFSET, #0x4]
+@         blt step_delay_high
+@         pop {r1, pc}
+@ step_delay_low:
+@         cmp r1, [TIMERIR_OFFSET, #0x8]
+@         blt step_delay_low
+@         pop {r1, pc}
+
 @ -----------------------------------------------------------------------------
 @ Advances the colour wheel until on of its magnets are detected by the hall
 @ sensor but at least 200 steps
