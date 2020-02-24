@@ -29,14 +29,12 @@ Das folgende Diagramm liefert einen detaillierteren Einblick:
 
 - Cross Compiler aussuchen und aufsetzen
 - RPI0 Compiler Flags
---> arm-none-eabi-gcc \
-    -mfloat-abi=hard \
-    -mfpu=vfp \
-    -march=armv6zk \
-    -mtune=arm1176jzf-s \
-    main.c -o main.elf
-- kernel8.img kompilieren und booten
-- GPIO Controller aufsetzen 
+- exit function für den Linker
+- kernel.elf Datei erzeugen
+- GPIO Controller aufsetzen
+- kernel.img erzeugen, (kompilieren)
+- kernel.img auf SD Karte laden
+- booten
 
 
 # Aufgabe 1.3 Unterschiede zum normalen Betrieb? + Besonderheiten bei der Programmierung
