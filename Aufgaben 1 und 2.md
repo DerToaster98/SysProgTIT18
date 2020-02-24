@@ -1,8 +1,7 @@
 # Aufgabe1
 
-## Aufgabe 1.1 
-Boot-Vorgang
--
+## Aufgabe 1.1 Boot-Vorgang
+
 Nach Anlegen der Spannung wird der OTP(one-time programmable)-Block gelesen, um zu ermitteln, welcher Boot Mode aktiviert ist. (Beim BCM2835 wird vorher erst der SD-Card boot versucht, danach wird USB Device Boot versucht) Je nach boot mode wird GPIO PIN 48-53(Seite 102 ARM Peripherals Datasheet), primary SD, secondary SD, NAND, SPI oder USB nach der bootcode.bin gesucht. Bei den SD Karten wird nach einem FAIL ein 5 sekündiger Timeout eingeleitet.
 
 Der Bootvorgang läuft in (grob) 5 Stages ab:
@@ -28,9 +27,8 @@ Das folgende Diagramm liefert einen detaillierteren Einblick:
 
 ![](PI_Boot.png)
 
-## Aufgabe 1.2 
-Wie wird ein Bare-Metal-System für den Raspberry Pi erzeugt?
--
+## Aufgabe 1.2 Wie wird ein Bare-Metal-System für den Raspberry Pi erzeugt?
+
 - Cross Compiler aussuchen und aufsetzen
 - RPI0 Compiler Flags
 - exit function für den Linker
@@ -41,9 +39,8 @@ Wie wird ein Bare-Metal-System für den Raspberry Pi erzeugt?
 - booten
 
 
-## Aufgabe 1.3 
-Unterschiede zum normalen Betrieb? + Besonderheiten bei der Programmierung
--
+## Aufgabe 1.3 Unterschiede zum normalen Betrieb? + Besonderheiten bei der Programmierung
+
 Im Bare Metal Betrieb ist ein uneingeschränkter Zugriff auf alle Register des SoC, wie Timer, GPIO-dataln, etc. möglich. --> keine virtuellen Adressen, wie bei Linux.
 Speicherbereich muss mit Bedacht zugewiesen werden. --> Überschneidungen führen zu einem System-Interrupt.
 Speicherbereich wird von der MMU des OS gespiegelt und als GPIO-Basisadresse verwendet.
@@ -57,20 +54,17 @@ Bare Metal Systeme sind, da kein OS im Hintergrund laufen muss, bedeutend schnel
 Wir haben uns für die Programmierung auf Linux-Basis entschieden.
 Gründe dafür waren:
 
-Debugging
--
+- Debugging
 Gibt es für Bare-Metal nicht
 
-Console
--
+- Console
+Direkter Output von zusatz Debug Infos
 
-Dateisystem
--
+- Dateisystem
+?
 
-Multitasking
--
+- Multitasking
+Debugging und verändern des Codes während dieser Läuft und nachvollziehen, was im code dort steht
 
-WLAN (Remote execution)
--
-
-
+- WLAN (Remote execution)
+keine extra SD karte notwendig
