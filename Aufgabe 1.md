@@ -23,7 +23,7 @@ kernel.img wird auf den ARM geladen und dort ausgeführt
 
 Das folgende Diagramm liefert einen detaillierteren Einblick:
 
-![](SysProgTIT18/PI_Boot.png)
+![](PI_Boot.png)
 
 # Aufgabe 1.2 Wie wird ein Bare-Metal-System für den Raspberry Pi erzeugt?
 
