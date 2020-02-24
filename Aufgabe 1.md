@@ -27,5 +27,12 @@ Das folgende Diagramm liefert einen detaillierteren Einblick:
 
 # Aufgabe 1.2 Wie wird ein Bare-Metal-System für den Raspberry Pi erzeugt?
 
+
+
 # Aufgabe 1.3 Unterschiede zum normalen Betrieb? + Besonderheiten bei der Programmierung
 
+Im Bare Metal Betrieb ist ein uneingeschränkter Zugriff auf alle Register des SoC, wie Timer, GPIO-dataln, etc. möglich. --> keine Relativen Adressen, wie bei Linux.
+Speicherbereich muss mit Bedacht zugewiesen werden. --> Überschneidungen führen zu einem System-Interrupt.
+Speicherbereich wird von der MMU des OS gespiegelt und als GPIO-Basisadresse verwendet.
+
+Bare Metal Systeme sind, da kein OS im Hintergrund laufen muss, bedeutend schneller. 
