@@ -54,17 +54,17 @@ Bare Metal Systeme sind, da kein OS im Hintergrund laufen muss, bedeutend schnel
 Wir haben uns für die Programmierung auf Linux-Basis entschieden.
 Gründe dafür waren:
 
-- Debugging
+- Debugging:
 Gibt es für Bare-Metal nicht
 
-- Console
+- Console:
 Direkter Output von zusatz Debug Infos
 
-- Dateisystem
+- Dateisystem:
 ?
 
-- Multitasking
+- Multitasking:
 Debugging und verändern des Codes während dieser Läuft und nachvollziehen, was im code dort steht
 
-- WLAN (Remote execution)
+- WLAN (Remote execution):
 keine extra SD karte notwendig
