@@ -1,8 +1,8 @@
-# Aufgabe 1: Bare Metal ausarbeiten
-Zuständigkeit: Samuel Rundel DONE
+# DONE Aufgabe 1: Bare Metal ausarbeiten
+Zuständigkeit: Samuel Rundel
 
 # Aufgabe 2: Dokumentation
-## Aufgabe 2.1
+## DONE Aufgabe 2.1
 Bare Metal:
 - Context Switching
 - Herausforderung
