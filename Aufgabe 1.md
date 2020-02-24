@@ -27,11 +27,21 @@ Das folgende Diagramm liefert einen detaillierteren Einblick:
 
 # Aufgabe 1.2 Wie wird ein Bare-Metal-System für den Raspberry Pi erzeugt?
 
+- Cross Compiler aussuchen und aufsetzen
+- RPI0 Compiler Flags
+--> arm-none-eabi-gcc \
+    -mfloat-abi=hard \
+    -mfpu=vfp \
+    -march=armv6zk \
+    -mtune=arm1176jzf-s \
+    main.c -o main.elf
+- kernel8.img kompilieren und booten
+- GPIO Controller aufsetzen 
 
 
 # Aufgabe 1.3 Unterschiede zum normalen Betrieb? + Besonderheiten bei der Programmierung
 
-Im Bare Metal Betrieb ist ein uneingeschränkter Zugriff auf alle Register des SoC, wie Timer, GPIO-dataln, etc. möglich. --> keine Relativen Adressen, wie bei Linux.
+Im Bare Metal Betrieb ist ein uneingeschränkter Zugriff auf alle Register des SoC, wie Timer, GPIO-dataln, etc. möglich. --> keine virtuellen Adressen, wie bei Linux.
 Speicherbereich muss mit Bedacht zugewiesen werden. --> Überschneidungen führen zu einem System-Interrupt.
 Speicherbereich wird von der MMU des OS gespiegelt und als GPIO-Basisadresse verwendet.
 
