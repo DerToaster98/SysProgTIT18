@@ -1,5 +1,5 @@
 # Aufgabe 1: Bare Metal ausarbeiten
-Zuständigkeit: Samuel Rundel
+Zuständigkeit: Samuel Rundel DONE
 
 # Aufgabe 2: Dokumentation
 ## Aufgabe 2.1
