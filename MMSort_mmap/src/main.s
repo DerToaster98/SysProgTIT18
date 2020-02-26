@@ -57,6 +57,7 @@
 
          .equ       set_pin_out, 0x1C
          .equ       clear_pin_out, 0x28
+         .equ       pin_level, 0x34
 
 SNORKEL .req      r4
 TMPREG  .req      r5
@@ -100,6 +101,17 @@ timerir_mmap_fd:
 
 mm_counter:
               .word         0
+segment_pattern:
+        .word   2_11101110       @ 0
+        .word   2_01100000       @ 1
+        .word   2_11011010       @ 2
+        .word   2_11110010       @ 3
+        .word   2_01100110       @ 4
+        .word   2_10110110       @ 5
+        .word   2_10111110       @ 6
+        .word   2_11100000       @ 7
+        .word   2_11111110       @ 8
+        .word   2_11100110       @ 9
 
 @ - END OF DATA SECTION @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -120,7 +132,7 @@ mm_counter:
         .extern WS2812RPi_Init
         .extern WS2812RPi_DeInit
         .extern WS2812RPi_SetBrightness       @ provide (uint8_t brightness);
-        .extern WS2812RPi_SetSingle           @ provide (uint8_t pos, uint32_t color);
+        .extern WS2812RPi_SetSingle           @ provide (uint8_t pos, uint32_t colour);
         .extern WS2812RPi_SetOthersOff        @ provide (uint8_t pos);
         .extern WS2812RPi_AllOff              @ provide (void);
         .extern WS2812RPi_AnimDo              @ provide (uint32_t cntCycles);
@@ -277,46 +289,36 @@ hw_init:
 @   return:    none
 @ -----------------------------------------------------------------------------
 mainloop:
-        push {lr}
-        bl advance_colourwheel
-        mov r6, #red
-        bl move_snorkel_color
-        mov r1, r6
-        bl move_outlet_steps
-        b mainloop_exit
-        
+        push {r1, r2, lr}
         mov r1, #0x00080000        @ r1: Feeder bit
 mainloop_loop:
-        ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
+        ldr r2, [GPIOREG, pin_level]  @ Read the Pin Level Registry
         tst r2, #0x100     @ Bit 8 is set, --> button not pressed
-        beq mainloop_exit         @ if button pressed, exit
+        beq mainloop_exit         @ if button pressed, exit TODO Verify
 
         str r1, [GPIOREG, #set_pin_out]  @ Turn on feeder
-mainloop_fetch_mm:
         mov RETREG, #0xFF000000   @ If colour is NA, r6 is left unchanged, thus NA = 0xFF000000
+mainloop_fetch_mm:
         bl get_colour
         cmp RETREG, #0xFF000000
         bne mainloop_fetch_mm_end
         bl advance_colourwheel
-        @bl step_delay            @ Give the colour sensor time to think
         b mainloop_fetch_mm
 mainloop_fetch_mm_end:
         str r1, [GPIOREG, #clear_pin_out]  @ Turn off feeder
 
         mov r1, RETREG            @ r1: Colour
-        bl show_led
-        bl move_snorkel_color
-        mov r1, RETREG            @ r1: Steps to move
-        bl move_outlet_steps      @ Position outlet
+        bl show_led               @ TODO Verify colour
+        bl move_snorkel_colour    @ TODO Verify colour
 
-        bl advance_colourwheel
+        bl advance_colourwheel    @ Cause M&M to fall out
 
         bl increment_counter
 
         b mainloop_loop
 
 mainloop_exit:
-        pop {pc}
+        pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
 @ Sets up GPIOs for later use
@@ -376,7 +378,7 @@ init_gpio:
 @ -----------------------------------------------------------------------------
 
 wait_button_start:
-        ldr r2, [GPIOREG, #0x34]  @ Read the Pin Level Registry
+        ldr r2, [GPIOREG, pin_level]  @ Read the Pin Level Registry
         tst r2, #0x100     @ Bit 8 is set, --> button not pressed
         bne wait_button_start
         bx lr
@@ -411,7 +413,7 @@ init_outlet: @ TODO Centre properly
         mov r1, #1                
 
 init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
-        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+        ldr r2, [GPIOREG, pin_level]  @ Read outlet hall sensor state
         tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         beq init_outlet_loop_while_detected @ if detected, move to next loop
         bl move_outlet_steps    @ Hall sensor doesn't detect outlet
@@ -419,7 +421,7 @@ init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do tu
 
 init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do turn 
                                   @ (ensures the outlet is on the edge of the sensors detection range)
-        ldr r2, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+        ldr r2, [GPIOREG, pin_level]  @ Read outlet hall sensor state
         tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne init_outlet_exit      @ if not detected any more, exit
         bl move_outlet_steps      @ Hall sensor detects outlet
@@ -431,7 +433,7 @@ init_outlet_exit:
 
 
 init_leds:
-        push {GPIOREG, lr}
+        push {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, lr}
 
         bl WS2812RPi_Init
 
@@ -474,7 +476,9 @@ init_leds:
         orr r1, #0x00002D
         bl WS2812RPi_SetSingle
 
-        pop {GPIOREG, pc}
+        bl WS2812RPi_Show
+        bl init_gpio              @ Don't trust the library
+        pop {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, pc}
 
 
 @ -----------------------------------------------------------------------------
@@ -503,78 +507,76 @@ move_outlet_steps_exit:
         pop {r0, r2, pc}
 
 @ -----------------------------------------------------------------------------
-@ Gets the difference between the current postition (SNORKEL) and the wanted Position (given from the get_color)
-@   param:     r1 --> the wanted position
-@   return:    r6 --> the needed amount of steps between current position and wanted position
+@ Moves the snorkel to the specified colour
+@   param:     r1 -> the wanted position
+@   return:    None
 @ -----------------------------------------------------------------------------
-move_snorkel_color:
-        push {r0, r2, lr}
-        mov r6, r1
-        cmp SNORKEL, r6
-        beq move_snorkel_color_end                                   @ The snorkel is already on the wanted position.
-        bgt move_snorkel_color_backwards                         @ The snorkel is too far. a full turn is required
-        blt move_snorkel_color_forwards                              @ The snorkel is in front of the wanted position. More steps are required
+move_snorkel_colour:
+        push {r0, r1, r2, lr}
+        cmp SNORKEL, r1
+        beq move_snorkel_colour_end                                   @ The snorkel is already on the wanted position.
+        bgt move_snorkel_colour_backwards                         @ The snorkel is too far. a full turn is required
+        blt move_snorkel_colour_forwards                              @ The snorkel is in front of the wanted position. More steps are required
 
-move_snorkel_color_backwards:
-        add r6, #400
-        sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        @bl move_outlet_steps
-        b move_snorkel_color_end
+move_snorkel_colour_backwards:
+        add r1, #400
+        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl move_outlet_steps
+        b move_snorkel_colour_end
 
-move_snorkel_color_forwards:
-        sub r6, r6, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
-        @bl move_outlet_steps
-        b move_snorkel_color_end
+move_snorkel_colour_forwards:
+        sub r1, r1, SNORKEL  @r1: Difference between current position and future position: Steps to take to get to next position.
+        bl move_outlet_steps
+        b move_snorkel_colour_end
 
-move_snorkel_color_end:
-        pop {r0, r2, pc}
+move_snorkel_colour_end:
+        pop {r0, r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
 @ Gets the colour detected by the colour sensor
 @   param:     none
-@   return:    
+@   return:    The colour as defined above
 @ -----------------------------------------------------------------------------
 get_colour:
-        @ TODO
-              ldr  r1,[GPIOREG, #0x34]
-              tst  r1,#0x0400000    @Is Color red?
-              bne color_red
+        ldr  r1,[GPIOREG, pin_level]
+        tst  r1,#0x0400000    @Is colour red?
+        bne colour_red         @ TODO Verify
 
-              tst  r1,#0x0800000    @Is Color green?
-              bne color_green
+        tst  r1,#0x0800000    @Is colour green?
+        bne colour_green
 
-              tst  r1,#0x0C00000    @Is Color blue?
-              bne  color_blue
+        tst  r1,#0x0C00000    @Is colour blue?
+        bne  colour_blue
 
-              tst  r1,#0x1000000    @Is Color brown?
-              bne  color_brown
+        tst  r1,#0x1000000    @Is colour brown?
+        bne  colour_brown
 
-              tst  r1,#0x1400000    @Is Color orange?
-              bne  color_orange
+        tst  r1,#0x1400000    @Is colour orange?
+        bne  colour_orange
 
-              tst  r1,#0x1800000    @Is Color yellow?
-              bne color_yellow
+        tst  r1,#0x1800000    @Is colour yellow?
+        bne colour_yellow
 
         bx lr
 
-color_yellow:
-           mov RETREG,#yellow
-              bx lr
-color_orange:
-              mov RETREG,#orange
-              bx lr
-color_brown:
-              mov RETREG,#brown
-              bx lr
-color_blue:
-              mov RETREG,#blue
-              bx lr
-color_green:
-              mov RETREG,#green
-              bx lr
-color_red:
-              mov RETREG,#red
-              bx lr
+colour_yellow:
+        mov RETREG,#yellow
+        bx lr
+colour_orange:
+        mov RETREG,#orange
+        bx lr
+colour_brown:
+        mov RETREG,#brown
+        bx lr
+colour_blue:
+        mov RETREG,#blue
+        bx lr
+colour_green:
+        mov RETREG,#green
+        bx lr
+colour_red:
+        mov RETREG,#red
+        bx lr
 
 
 @ -----------------------------------------------------------------------------
@@ -680,12 +682,12 @@ advance_colourwheel_loop:
         bl step_delay
         str r2, [GPIOREG, #clear_pin_out]  @ Falling edge
         bl step_delay
-        add r1, #1                @ if i < 50 continue, else check if hall sensor detects
-        cmp r1, #200
+        add r1, #1                @ ++i
+        cmp r1, #200              @ if i < 200 continue, else check if hall sensor detects
         blt advance_colourwheel_loop
-        ldr r3, [GPIOREG, #0x34]  @ Read outlet hall sensor state
+        ldr r3, [GPIOREG, pin_level]  @ Read outlet hall sensor state
         tst r3, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
-        bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
+        bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet TODO Verify
         pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
@@ -711,68 +713,133 @@ turn_off:
 @   return:    none
 @ -----------------------------------------------------------------------------
 increment_counter:
-              @ DONE: Increment counter number by one
-              push        {r1, r2}
-              ldr        r2, =mm_counter
-              ldr              r1, [r2]
-              add              r1, #1
-              str              r1, [r2]
-              pop        {r1, r2}
+        push {r1, r2, r3, r4, r5, lr}
+        ldr r2, =mm_counter     @ r2: &counter
+        ldr r1, [r2]            @ r1: counter (BCD)
+        and r3, r1, #xF         @ r3: counter digit
+        mov r4, #0              @ r4: digit position in r1
 
-              @Temporary code for displaying ###4 on the display
-              push       {r1}
-              mov              r1, #0x10                     @sets nSRCLR to high, its the 5th bit in the bit mask -> 10000
-              str        r1, [GPIOREG, #set_pin_out]
+increment_counter_loop:         @ while r3 >= 9 : set r3 = 0, set r1[r4] = r3, set r3 = r1[++r4]
 
-              push       {r2}
+        mov r3, r1              @ load r3
+        lsr r3, r4
+        and r3, r3, #0xF
 
-              mov              r2, #0x4
-              str              r2, [GPIOREG, #set_pin_out]
+        cmp r3, #9
+        blt increment_counter_loop_end @ if r3 < 9 : exit
 
-              @Rising edge on SRCLK
-              mov              r1, #0x8
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
+        mov r3, #0xF            @ Set r3 to zero and store the respective digit in r1
+        lsl r3, r4
+        neg r3, r3 
+        and r1, r1, r3
 
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-	        mov              r1, #0xC0                    @sets A and B to high, they are bit 7 and 8 ->       11000000
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              mov              r1, #0x20					@Bit 5 setzen -> RCLK
-              str              r1, [GPIOREG, #set_pin_out]
-              str              r1, [GPIOREG, #clear_pin_out]
-
-              mov              r1, #0x10                    @sets nSRCLR to low, its the 5th bit in the bit mask -> 10000
-              str       	   r1, [GPIOREG, #clear_pin_out]
+        add r4, #4              @ Next digit
+        b increment_counter_loop
 
 
-              pop              {r2}
-              pop              {r1}
+increment_counter_loop_end:     @ if r4 >= 5thdigit : set r1 = 0; else : r1[r4] = ++r3
+        cmp r4, #16
+        bge increment_counter_reset
 
-              bx               lr
+        add r3, r3, #1          @ Increment and move digit to correct position
+        lsl r3, r4
+
+        mov r5, #0xF
+        lsl r5, r4
+        neg r5, r5
+        and r1, r1, r5          @ First clear the digits bits, the orr the new digit onto it
+        orr r1, r1, r3
+        b increment_counter_end
+
+increment_counter_reset:
+        mov r1, #0
+        b increment_counter_end
+
+increment_counter_end:
+        bl show_number
+        str r1, [r2]
+        pop {r1, r2, r3, r4, r5, pc}
+
+
+@ -----------------------------------------------------------------------------
+@ Displays the provided number on the 7-Segment display
+@   param:     r1 -> The number to display
+@   return:    none
+@ ----------------------------------------------------------------------------
+show_number:
+        push {r1, r2, r3, r4, lr}
+        ldr r2, =segment_pattern        @ r2: &segment_pattern[0]
+        mov r4, #0                      @ r4: i
+show_numer_loop:                        @ for (int i = 0; i < 4; ++i)
+        cmp r4, #4                      @ if i >= 4 : exit
+        bge show_number_loop_end
+
+        mov r3, r1
+        and r3, #0xF                    @ r3: digit[i]
+        ldr r3, [r2, r3]                @ r3: segment_pattern[digit[i]]
+
+        push {r1, r2}
+        mov r1, r3                      @ Param1: Bitpattern
+        mov r2, r4                      @ Param2: Which segment to output to
+        bl print_digit
+        pop {r1, r2}
+
+        lsr r1, r1, #4                  @ Next digit
+        add r4, #1                      @ ++i
+
+show_number_loop_end:
+        pop {r1, r2, r3, r4, pc}
+
+
+@ -----------------------------------------------------------------------------
+@ Outputs the provided bitpattern on the specified segment display
+@   param:     r1 -> The bitpattern to output
+@   param:     r2 -> The display to output to (Value between 0 and 3)
+@   return:    none
+@ ----------------------------------------------------------------------------
+print_digit:
+        push {r1, r2, r3, r4, r5, lr}
+
+        mov r3, #0x10           @ sets nSRCLR to high, so the SR can be filled
+        str r3, [GPIOREG, #set_pin_out]
+
+        mov r5, #0x4            @ 0x4: SER, the signal that gets stored in the next SR bit
+        mov r4, #0x8            @ 0x8: SRCLK, demermines the rate at which the SR is filled by SER
+
+        mov r3, #0              @ r3: i
+print_digit_loop:               @ for (int i = 0; i < 8; ++i)
+        cmp r3, #8
+        bge print_digit_loop_end
+
+        str r4, [GPIOREG, #clear_pin_out] @ Falling edge
+
+        tst r1, #1              @ Set SER according to current bit
+        streq r5, [GPIOREG, #set_pin_out] @ TODO Verify
+        strne r5, [GPIOREG, #clear_pin_out]
+
+        str r4, [GPIOREG, #set_pin_out] @ Rising edge -> Store bit
+
+        lsr r1, #1              @ Next bit
+        b print_digit_loop
+
+print_digit_loop_end:
+
+        @ Store byte
+
+        lsl r2, #7              @ Set A / B to select segment display
+        str r2, [GPIOREG, #set_pin_out]
+        neg r2, r2              @ Reset A / B accordingly
+        and r2, #0xC0
+        str r2, [GPIOREG, #clear_pin_out]
+
+        mov r1, #0x20           @ Reset and Set RCLK to force a rising edge, causes the SRs content to be stored
+        str r1, [GPIOREG, #clear_pin_out]
+        str r1, [GPIOREG, #set_pin_out]
+
+        mov r1, #0x10           @ Reset nSRCLR
+        str r1, [GPIOREG, #clear_pin_out]
+
+        pop {r1, r2, r3, r4, r5, pc}
 
 @ -----------------------------------------------------------------------------
 @ Sets counter to 0
