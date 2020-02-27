@@ -1,4 +1,4 @@
-# Aufgabe1
+# Aufgabe 1
 
 ## Aufgabe 1.1 Boot-Vorgang
 
