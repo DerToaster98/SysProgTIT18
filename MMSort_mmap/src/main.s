@@ -107,16 +107,16 @@ mm_counter:             @ Holds the amount of counted M&Ms since the last activa
         .word         0
 
 segment_pattern:        @ : int array; Bitpatterns for each digit to be displayed on the 7 segment display
-        .word   2_11101110       @ 0
-        .word   2_01100000       @ 1
-        .word   2_11011010       @ 2
-        .word   2_11110010       @ 3
-        .word   2_01100110       @ 4
-        .word   2_10110110       @ 5
-        .word   2_10111110       @ 6
-        .word   2_11100000       @ 7
-        .word   2_11111110       @ 8
-        .word   2_11100110       @ 9
+        .word   0xEE    @ 2_11101110       @ 0
+        .word   0x60    @ 2_01100000       @ 1
+        .word   0xDA    @ 2_11011010       @ 2
+        .word   0xF2    @ 2_11110010       @ 3
+        .word   0x66    @ 2_01100110       @ 4
+        .word   0xB6    @ 2_10110110       @ 5
+        .word   0xBE    @ 2_10111110       @ 6
+        .word   0xE0    @ 2_11100000       @ 7
+        .word   0xFE    @ 2_11111110       @ 8
+        .word   0xE6    @ 2_11100110       @ 9
 
 @ - END OF DATA SECTION @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -299,7 +299,7 @@ mainloop:
         push {r1, r2, lr}
         mov r1, #0x00080000        @ r1: Feeder bit
 mainloop_loop:
-        ldr r2, [GPIOREG, pin_level]  @ Read the Pin Level Registry
+        ldr r2, [GPIOREG, #pin_level]  @ Read the Pin Level Registry
         tst r2, #0x100     @ Bit 8 is set, --> button not pressed
         beq mainloop_exit         @ if button pressed, exit TODO Verify
 
@@ -385,7 +385,7 @@ init_gpio:
 @ -----------------------------------------------------------------------------
 
 wait_button_start:
-        ldr r2, [GPIOREG, pin_level]  @ Read the Pin Level Registry
+        ldr r2, [GPIOREG, #pin_level]  @ Read the Pin Level Registry
         tst r2, #0x100     @ Bit 8 is set, --> button not pressed
         bne wait_button_start
         bx lr
@@ -420,7 +420,7 @@ init_outlet: @ TODO Centre properly
         mov r1, #1                
 
 init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
-        ldr r2, [GPIOREG, pin_level]  @ Read outlet hall sensor state
+        ldr r2, [GPIOREG, #pin_level]  @ Read outlet hall sensor state
         tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         beq init_outlet_loop_while_detected @ if detected, move to next loop
         bl move_outlet_steps    @ Hall sensor doesn't detect outlet
@@ -428,7 +428,7 @@ init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do tu
 
 init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do turn 
                                   @ (ensures the outlet is on the edge of the sensors detection range)
-        ldr r2, [GPIOREG, pin_level]  @ Read outlet hall sensor state
+        ldr r2, [GPIOREG, #pin_level]  @ Read outlet hall sensor state
         tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne init_outlet_exit      @ if not detected any more, exit
         bl move_outlet_steps      @ Hall sensor detects outlet
@@ -440,7 +440,7 @@ init_outlet_exit:
 
 
 init_leds:
-        push {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, lr}
+        push {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, lr}
 
         bl WS2812RPi_Init
 
@@ -485,7 +485,7 @@ init_leds:
 
         bl WS2812RPi_Show
         bl init_gpio              @ Don't trust the library
-        pop {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, pc}
+        pop {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, pc}
 
 
 @ -----------------------------------------------------------------------------
@@ -545,7 +545,7 @@ move_snorkel_colour_end:
 @   return:    The colour as defined above
 @ -----------------------------------------------------------------------------
 get_colour:
-        ldr  r1,[GPIOREG, pin_level]
+        ldr  r1,[GPIOREG, #pin_level]
         tst  r1,#0x0400000    @Is colour red?
         bne colour_red         @ TODO Verify
 
@@ -592,7 +592,7 @@ colour_red:
 @   return:    none
 @ -----------------------------------------------------------------------------
 show_led:
-        push {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, lr}
+        push {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, lr}
         cmp r1, #orange
         beq show_led_orange
         cmp r1, #yellow
@@ -610,7 +610,7 @@ show_led:
 show_led_exit:
         bl WS2812RPi_Show
         bl init_gpio              @ Don't trust the library
-        pop {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, pc}
+        pop {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, pc}
    
 show_led_orange:
         mov r0, #1
@@ -649,10 +649,12 @@ show_led_brown:
 @ -----------------------------------------------------------------------------
 step_delay: @ TODO implement with hardware timer
         push {r1, r2, lr}
+        mov r2, #0xFF00
+        orr r2, #0x00FF   @ r2: When to show counter
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
 step_delay_loop:
         add r1, #1
-        tst r1, #0xFFFF
+        tst r1, r2
         bleq show_number @ Do every 0x10000th cycle
         cmp r1, #0x200000
         blt step_delay_loop
@@ -694,7 +696,7 @@ advance_colourwheel_loop:
         add r1, #1                @ ++i
         cmp r1, #200              @ if i < 200 continue, else check if hall sensor detects
         blt advance_colourwheel_loop
-        ldr r3, [GPIOREG, pin_level]  @ Read outlet hall sensor state
+        ldr r3, [GPIOREG, #pin_level]  @ Read outlet hall sensor state
         tst r3, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet TODO Verify
         pop {r1, r2, pc}
@@ -760,7 +762,7 @@ increment_counter:
         push {r1, r2, r3, r4, r5, lr}
         ldr r2, =mm_counter     @ r2: &counter
         ldr r1, [r2]            @ r1: counter (BCD)
-        and r3, r1, #xF         @ r3: counter digit
+        and r3, r1, #0xF         @ r3: counter digit
         mov r4, #0              @ r4: digit position in r1
 
 increment_counter_loop:         @ while r3 >= 9 : set r3 = 0, set r1[r4] = r3, set r3 = r1[++r4]
