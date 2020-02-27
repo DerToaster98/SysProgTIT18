@@ -141,9 +141,9 @@ segment_pattern:        @ : int array; Bitpatterns for each digit to be displaye
 main:
 
 		@Init IRQ-ISR
-		ldr pc, _interrupt_vector_h
+		@ldr pc, _interrupt_vector_h
 
-_interrupt_vector_h:		.word   irq
+@_interrupt_vector_h:		.word   irq
         ldr r0, =IntroMsg
         bl  printf
 
@@ -434,12 +434,12 @@ init_leds:
 
         bl WS2812RPi_Init
 
-        mov r0, #50
+        mov r0, #32
         bl WS2812RPi_SetBrightness
 
         mov r0, #2                @ Sets orange LED (ifm-orange)
-        mov r1, #0xFF0000
-        orr r1, #0x00A500
+        mov r1, #0xF60000
+        orr r1, #0x006900
         orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
@@ -468,13 +468,12 @@ init_leds:
         bl WS2812RPi_SetSingle
 
         mov r0, #4                @ Sets brown LED (m&m-brown)
-        mov r1, #0x8B0000
-        orr r1, #0x005A00
-        orr r1, #0x000000
+        mov r1, #0x650000
+        orr r1, #0x004300
+        orr r1, #0x000021
         bl WS2812RPi_SetSingle
 
         bl WS2812RPi_Show
-        @bl init_gpio              @ Don't trust the library  Commented out
         pop {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, pc}
 
 
@@ -585,6 +584,7 @@ colour_red:
 @ -----------------------------------------------------------------------------
 show_led:
         push {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, lr}
+        bl WS2812RPi_AllOff
         cmp r1, #orange
         beq show_led_orange
         cmp r1, #yellow
@@ -597,77 +597,95 @@ show_led:
         beq show_led_red
         cmp r1, #brown
         beq show_led_brown
-        bl WS2812RPi_AllOff
 
 show_led_exit:
         bl WS2812RPi_Show
-        @bl init_gpio              @ Don't trust the library    Commented out
         pop {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, pc}
    
 show_led_orange:
-        mov r0, #2
-        bl WS2812RPi_SetOthersOff
+        mov r0, #2                @ Sets orange LED
+        mov r1, #0xF60000
+        orr r1, #0x006900
+        orr r1, #0x000000
+        bl WS2812RPi_SetSingle
         b show_led_exit
-   
+
 show_led_yellow:
-        mov r0, #1
-        bl WS2812RPi_SetOthersOff
+        mov r0, #1                @ Sets yellow LED
+        mov r1, #0xFF0000
+        orr r1, #0x00FF00
+        orr r1, #0x000000
+        bl WS2812RPi_SetSingle
         b show_led_exit
-   
+
 show_led_green:
-        mov r0, #3
-        bl WS2812RPi_SetOthersOff
+        mov r0, #3                @ Sets green LED
+        mov r1, #0x000000
+        orr r1, #0x00FF00
+        orr r1, #0x000000
+        bl WS2812RPi_SetSingle
         b show_led_exit
-   
+
 show_led_blue:
-        mov r0, #5
-        bl WS2812RPi_SetOthersOff
+        mov r0, #5                @ Sets blue LED
+        mov r1, #0x000000
+        orr r1, #0x000000
+        orr r1, #0x0000FF
+        bl WS2812RPi_SetSingle
         b show_led_exit
-   
+
 show_led_red:
-        mov r0, #6
-        bl WS2812RPi_SetOthersOff
+        mov r0, #6                @ Sets red LED
+        mov r1, #0xFF0000
+        orr r1, #0x000000
+        orr r1, #0x000000
+        bl WS2812RPi_SetSingle
         b show_led_exit
-   
+
 show_led_brown:
-        mov r0, #4
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
+        mov r0, #4                @ Sets brown LED
+        mov r1, #0x650000
+        orr r1, #0x004300
+        orr r1, #0x000021
+        bl WS2812RPi_SetSingle
+
 
 @ -----------------------------------------------------------------------------
 @ Delays execution by the time the step motor needs between edges
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-step_delay: @ TODO implement with hardware timer
+@step_delay: @ TODO implement with hardware timer
         push {r1, r2, lr}
         mov r2, #0xFF00
         orr r2, #0x00FF   @ r2: When to show counter
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
-step_delay_loop:
+@step_delay_loop:
         add r1, #1
         @tst r1, r2
         @bleq show_counter @ Do every 0x10000th cycle  Commented out
-        cmp r1, #0x200000
+        cmp r1, #0x100000
         blt step_delay_loop
         pop {r1, r2, pc}
 
 
-@ step_delay:
-@         @hardware timer offset: TIMERIR_OFFSET
-@         push {r1, lr}
-@         mov r1, [TIMERIR_OFFSET, #0x4]
-@         tst r1, #FFFFFFFF
-@         moveq r1, [TIMERIR_OFFSET, #0x8]
-@         add r1, #0x2D0000
-@ step_delay_high:
-@         cmp r1, [TIMERIR_OFFSET, #0x4]
-@         blt step_delay_high
-@         pop {r1, pc}
-@ step_delay_low:
-@         cmp r1, [TIMERIR_OFFSET, #0x8]
-@         blt step_delay_low
-@         pop {r1, pc}
+step_delay:
+        @hardware timer offset: TIMERIR_OFFSET
+        push {r1, lr}
+        mov r1, [TIMERIR_OFFSET, #0x4]
+        cmp r1, #0xFFFFFFFF
+        beq step_delay_low
+        add r1, #0x2D0000
+step_delay_high:
+        cmp r1, [TIMERIR_OFFSET, #0x4]
+        blt step_delay_high
+        pop {r1, pc}
+step_delay_low:
+        moveq r1, [TIMERIR_OFFSET, #0x8]
+step_delay_low_loop
+        cmp r1, [TIMERIR_OFFSET, #0x8]
+        blt step_delay_low_loop
+        pop {r1, pc}
 
 @ -----------------------------------------------------------------------------
 @ Advances the colour wheel until on of its magnets are detected by the hall
