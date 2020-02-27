@@ -531,7 +531,7 @@ move_snorkel_colour_end:
 @ -----------------------------------------------------------------------------
 get_colour:
         ldr  r1,[GPIOREG, #pin_level]
-        and r1, r1, #0x01C000000
+        and r1, r1, #0x01C00000
 
         cmp r1, #0x00400000     @Is colour red?
         beq colour_red
