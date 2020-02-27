@@ -405,7 +405,7 @@ init_interrupt:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-init_outlet: @ TODO Centre properly
+init_outlet:
         push {r1, r2, lr}
         mov r1, #1                
 
@@ -437,13 +437,13 @@ init_leds:
         mov r0, #50
         bl WS2812RPi_SetBrightness
 
-        mov r0, #1                @ Sets orange LED (ifm-orange)
+        mov r0, #2                @ Sets orange LED (ifm-orange)
         mov r1, #0xFF0000
         orr r1, #0x00A500
         orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
-        mov r0, #2                @ Sets yellow LED (dhl-yellow)
+        mov r0, #1                @ Sets yellow LED (dhl-yellow)
         mov r1, #0xFF0000
         orr r1, #0x00FF00
         orr r1, #0x000000
@@ -455,19 +455,19 @@ init_leds:
         orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
-        mov r0, #4                @ Sets blue LED (google-blue)
+        mov r0, #5                @ Sets blue LED (google-blue)
         mov r1, #0x000000
         orr r1, #0x000000
         orr r1, #0x0000FF
         bl WS2812RPi_SetSingle
 
-        mov r0, #5                @ Sets red LED (edag-red)
+        mov r0, #6                @ Sets red LED (edag-red)
         mov r1, #0xFF0000
         orr r1, #0x000000
         orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
-        mov r0, #6                @ Sets brown LED (m&m-brown)
+        mov r0, #4                @ Sets brown LED (m&m-brown)
         mov r1, #0x8B0000
         orr r1, #0x005A00
         orr r1, #0x000000
@@ -605,12 +605,12 @@ show_led_exit:
         pop {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, pc}
    
 show_led_orange:
-        mov r0, #1
+        mov r0, #2
         bl WS2812RPi_SetOthersOff
         b show_led_exit
    
 show_led_yellow:
-        mov r0, #2
+        mov r0, #1
         bl WS2812RPi_SetOthersOff
         b show_led_exit
    
@@ -620,17 +620,17 @@ show_led_green:
         b show_led_exit
    
 show_led_blue:
-        mov r0, #4
-        bl WS2812RPi_SetOthersOff
-        b show_led_exit
-   
-show_led_red:
         mov r0, #5
         bl WS2812RPi_SetOthersOff
         b show_led_exit
    
-show_led_brown:
+show_led_red:
         mov r0, #6
+        bl WS2812RPi_SetOthersOff
+        b show_led_exit
+   
+show_led_brown:
+        mov r0, #4
         bl WS2812RPi_SetOthersOff
         b show_led_exit
 
@@ -653,7 +653,7 @@ step_delay_loop:
         pop {r1, r2, pc}
 
 
-@ step_delay: @ TODO implement with hardware timer
+@ step_delay:
 @         @hardware timer offset: TIMERIR_OFFSET
 @         push {r1, lr}
 @         mov r1, [TIMERIR_OFFSET, #0x4]
@@ -675,7 +675,7 @@ step_delay_loop:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-advance_colourwheel: @ TODO Centre properly
+advance_colourwheel:
         push {r1, r2, r3, lr}         @ for (int i = 0; i < 200 || sensor == 1; ++i)
         mov r1, #0                @ r1: i
         mov r2, #0x00002000       @ Bit to toggle for step motor
@@ -690,7 +690,7 @@ advance_colourwheel_loop:
         blt advance_colourwheel_loop
         ldr r3, [GPIOREG, #pin_level]  @ Read outlet hall sensor state
         tst r3, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
-        bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet TODO Verify
+        bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet
         pop {r1, r2, r3, pc}
 
 @ -----------------------------------------------------------------------------
@@ -820,7 +820,7 @@ show_number:
         push {r1, r2, r3, r4, lr}
         ldr r2, =segment_pattern        @ r2: &segment_pattern[0]
         mov r4, #0                      @ r4: i
-show_numer_loop:                        @ for (int i = 0; i < 4; ++i)
+show_number_loop:                        @ for (int i = 0; i < 4; ++i)
         cmp r4, #4                      @ if i >= 4 : exit
         bge show_number_loop_end
 
@@ -836,6 +836,7 @@ show_numer_loop:                        @ for (int i = 0; i < 4; ++i)
 
         lsr r1, r1, #4                  @ Next digit
         add r4, #1                      @ ++i
+        b show_number_loop
 
 show_number_loop_end:
         pop {r1, r2, r3, r4, pc}
@@ -864,7 +865,7 @@ print_digit_loop:               @ for (int i = 0; i < 8; ++i)
         str r4, [GPIOREG, #clear_pin_out] @ Falling edge
 
         tst r1, #1              @ Set SER according to current bit
-        streq r5, [GPIOREG, #set_pin_out] @ TODO Verify
+        streq r5, [GPIOREG, #set_pin_out]
         strne r5, [GPIOREG, #clear_pin_out]
 
         str r4, [GPIOREG, #set_pin_out] @ Rising edge -> Store bit
