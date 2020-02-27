@@ -648,13 +648,15 @@ show_led_brown:
 @   return:    none
 @ -----------------------------------------------------------------------------
 step_delay: @ TODO implement with hardware timer
-        push {r1, lr}
+        push {r1, r2, lr}
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
 step_delay_loop:
         add r1, #1
-        cmp r1, #0x2D0000
+        tst r1, #0xFFFF
+        bleq show_number @ Do every 0x10000th cycle
+        cmp r1, #0x200000
         blt step_delay_loop
-        pop {r1, pc}
+        pop {r1, r2, pc}
 
 
 @ step_delay: @ TODO implement with hardware timer
@@ -802,6 +804,18 @@ increment_counter_end:
         str r1, [r2]
         pop {r1, r2, r3, r4, r5, pc}
 
+
+@ -----------------------------------------------------------------------------
+@ Displays the saved count of sorted M&Ms on the segment display
+@   param:     none
+@   return:    none
+@ ----------------------------------------------------------------------------
+show_counter:
+        push {r1, r2, lr}
+        ldr r2, =mm_counter
+        ldr r1, [r2]
+        bl show_number
+        pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
 @ Displays the provided number on the 7-Segment display
