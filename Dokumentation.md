@@ -68,4 +68,5 @@ Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen
 
 ## Aufgabe 2.2
 
-![](diagrams/export/Programmablauf_init.png)
+![Programmablauf der Funktion hw_init](diagrams/export/Programmablauf_init.png)
+![Programmablauf der Funktion hw_init_outlet](diagrams/export/Programmablauf_init_outlet.png)
