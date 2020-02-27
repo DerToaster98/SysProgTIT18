@@ -73,3 +73,9 @@ Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen
 
 ### Programmablauf der Funktion hw_init_outlet
 ![](diagrams/export/Programmablauf_init_outlet.png)
+
+### Programmablauf der Funktion mainloop
+![](diagrams/export/Programmablauf_mainloop.png)
+
+### Programmablauf der Funktion advance_colorwheel
+![](diagrams/export/Programmablauf_advance_colorwheel.png)
