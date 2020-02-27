@@ -1,4 +1,4 @@
-# Aufgabe1
+# Aufgabe 1
 
 ## Aufgabe 1.1 Boot-Vorgang
 
@@ -65,3 +65,17 @@ Eine Kombination aus der WLAN-Benutzung und Debugging. Durch einfacheres Debuggi
 
 ### - WLAN (Remote execution):
 Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen und so Zeit beim Debuggen sparen. Natürlich bietet das Benutzen der WLAN-Schnittstelle auch einige Schwierigkeiten, die allerdings überschaubar sind.
+
+## Aufgabe 2.2
+
+### Programmablauf der Funktion hw_init
+![](diagrams/export/Programmablauf_init.png)
+
+### Programmablauf der Funktion hw_init_outlet
+![](diagrams/export/Programmablauf_init_outlet.png)
+
+### Programmablauf der Funktion mainloop
+![](diagrams/export/Programmablauf_mainloop.png)
+
+### Programmablauf der Funktion advance_colorwheel
+![](diagrams/export/Programmablauf_advance_colorwheel.png)
