@@ -139,6 +139,11 @@ segment_pattern:        @ : int array; Bitpatterns for each digit to be displaye
 @   return:    none
 @ -----------------------------------------------------------------------------
 main:
+
+		@Init IRQ-ISR
+		ldr pc, _interrupt_vector_h
+
+_interrupt_vector_h:		.word   irq
         ldr r0, =IntroMsg
         bl  printf
 
@@ -434,38 +439,38 @@ init_leds:
 
         mov r0, #1                @ Sets orange LED (ifm-orange)
         mov r1, #0xFF0000
-        orr r1, #0x009600
+        orr r1, #0x00A500
         orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
         mov r0, #2                @ Sets yellow LED (dhl-yellow)
         mov r1, #0xFF0000
-        orr r1, #0x00CC00
+        orr r1, #0x00FF00
         orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
         mov r0, #3                @ Sets green LED (nvidia-green)
-        mov r1, #0x760000
-        orr r1, #0x00B900
+        mov r1, #0x000000
+        orr r1, #0x00FF00
         orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
         mov r0, #4                @ Sets blue LED (google-blue)
-        mov r1, #0x420000
-        orr r1, #0x008500
-        orr r1, #0x0000F4
+        mov r1, #0x000000
+        orr r1, #0x000000
+        orr r1, #0x0000FF
         bl WS2812RPi_SetSingle
 
         mov r0, #5                @ Sets red LED (edag-red)
-        mov r1, #0xD70000
-        orr r1, #0x001900
-        orr r1, #0x000046
+        mov r1, #0xFF0000
+        orr r1, #0x000000
+        orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
         mov r0, #6                @ Sets brown LED (m&m-brown)
-        mov r1, #0x5B0000
-        orr r1, #0x003500
-        orr r1, #0x00002D
+        mov r1, #0x8B0000
+        orr r1, #0x005A00
+        orr r1, #0x000000
         bl WS2812RPi_SetSingle
 
         bl WS2812RPi_Show
