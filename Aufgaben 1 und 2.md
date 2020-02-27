@@ -54,17 +54,17 @@ Bare Metal Systeme sind, da kein OS im Hintergrund laufen muss, bedeutend schnel
 Wir haben uns für die Programmierung auf Linux-Basis entschieden.
 Gründe dafür waren:
 
-- Debugging:
-Gibt es für Bare-Metal nicht
+### - Debugging:
+Aufgrund des bei Bare-Metal fehlendes Kernels ist es nicht möglich in irgendeiner Weiße von außerhalb auf den im Moment ausgeführten Assembler-Code zuzugreifen. Dadurch ist ein Debugging mit einem Programm von außerhalb nicht möglich. Man müsste sich mit anderen Methoden behelfen. Bei "normalen" Programmieren läuft während der Ausführung des Assembler-Codes der kernel mit. Hierdurch ist ein klassisches Debugging mit Eclipse möglich.
 
-- Console:
-Direkter Output von zusatz Debug Infos
+### - Console:
+Aufgrund des Dateisysteme, welche durch den Kernel aufrubar sind, ist es möglich auch deren Methoden zu verwenden. So ist es Beispielsweise möglich, durch den printf-befehl (C-Befehl) in den Output der angeschlossenen Konsole (bei uns der Eclipse-Debugger zu schreiben).
 
-- Dateisystem:
-?
+### - Dateisystem:
+Im Prinzip ist dieses Argument das selbe wie bereits erwähnt: Es ist möglich auf die Funktionen zuzugreifen, welche im File-System des Kernels liegen.
 
-- Multitasking:
-Debugging und verändern des Codes während dieser Läuft und nachvollziehen, was im code dort steht
+### - Multitasking:
+Eine Kombination aus der WLAN-Benutzung und Debugging. Durch einfacheres Debugging und einfacheres Laden des Programmes kann man bereits während der Ausführung änderungen einpflegen und schnell deployen.
 
-- WLAN (Remote execution):
-keine extra SD karte notwendig
+### - WLAN (Remote execution):
+Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen und so Zeit beim Debuggen sparen. Natürlich bietet das Benutzen der WLAN-Schnittstelle auch einige Schwierigkeiten, die allerdings überschaubar sind.
