@@ -54,7 +54,8 @@ Bare Metal Systeme sind, da kein OS im Hintergrund laufen muss, bedeutend schnel
 Wir haben uns für die Programmierung auf Linux-Basis entschieden.
 Gründe dafür waren:
 
-### - Debugging: Aufgrund des bei Bare-Metal fehlendes Kernels ist es nicht möglich in irgendeiner Weiße von außerhalb auf den im Moment ausgeführten Assembler-Code zuzugreifen. Dadurch ist ein Debugging mit einem Programm von außerhalb nicht möglich. Man müsste sich mit anderen Methoden behelfen. Bei "normalen" Programmieren läuft während der Ausführung des Assembler-Codes der kernel mit. Hierdurch ist ein klassisches Debugging mit Eclipse möglich.
+### - Debugging:
+Aufgrund des bei Bare-Metal fehlendes Kernels ist es nicht möglich in irgendeiner Weiße von außerhalb auf den im Moment ausgeführten Assembler-Code zuzugreifen. Dadurch ist ein Debugging mit einem Programm von außerhalb nicht möglich. Man müsste sich mit anderen Methoden behelfen. Bei "normalen" Programmieren läuft während der Ausführung des Assembler-Codes der kernel mit. Hierdurch ist ein klassisches Debugging mit Eclipse möglich.
 
 - Console:
 Direkter Output von zusatz Debug Infos
