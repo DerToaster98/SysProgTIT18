@@ -28,24 +28,21 @@ Das folgende Diagramm liefert einen detaillierteren Einblick:
 ![](PI_Boot.png)
 
 ## Aufgabe 1.2 Wie wird ein Bare-Metal-System für den Raspberry Pi erzeugt?
-
-- Cross Compiler aussuchen und aufsetzen
-- RPI0 Compiler Flags
-- exit function für den Linker
-- kernel.elf Datei erzeugen
-- GPIO Controller aufsetzen
-- kernel.img erzeugen, (kompilieren)
-- kernel.img auf SD Karte laden
-- booten
+- **Cross-Compiler aussuchen und aufsetzten:** Es gibt mehrere verschiedene Compiler, die eingesetzt werden können. Wichtig ist hier die richtige Konfiguration entsprechend der Hardware.
+- **RPI0 Compiler Flags:**
+- **Exit-Funktion für den Linker definieren:**
+- **kernel.elf Datei erzeugen:** Diese Datei wird beim booten gelesen und entsprechend wird der Code gestartet.
+- **GPIO Controller aufsetzen:**
+- **kernel.img erzeugen**: Das Prgramm wird Mithilfe des Cross-Compilers compiliert, im Normallfall wird eine IMG-Datei erzeugt.
+- **kernel.img auf SD Karte laden:** Sehr kompliziert, würde den Rahmen dieser Dokumentation sprengen.
+- **booten:** Strom anschalten und Daumen drücken
 
 
 ## Aufgabe 1.3 Unterschiede zum normalen Betrieb? + Besonderheiten bei der Programmierung
 
-Im Bare Metal Betrieb ist ein uneingeschränkter Zugriff auf alle Register des SoC, wie Timer, GPIO-dataln, etc. möglich. --> keine virtuellen Adressen, wie bei Linux.
-Speicherbereich muss mit Bedacht zugewiesen werden. --> Überschneidungen führen zu einem System-Interrupt.
-Speicherbereich wird von der MMU des OS gespiegelt und als GPIO-Basisadresse verwendet.
-
-Bare Metal Systeme sind, da kein OS im Hintergrund laufen muss, bedeutend schneller. 
+Im Bare-Metal-Betrieb ist ein uneingeschränkter Zugriff auf alle Register des SoC, wie Timer, GPIO-datalanes, etc. möglich. Es sind folglich keine virtuellen, Betriebsystem-Abhängigen Adressen nötig. Hierdurch wird die Prgrammierung tendentiell einfacher, da direkt mit den Werten, die im Chip-Handbuch genannt werden gearbeitet werden kann.
+Im Kernel-Betrieb ist es nötig, die Adressen mit einem Offset zu versehen. Hierdurch is ein umdenken notwendig, welches aber durch einen zu beginn definierten Offset behoben werden kann. Denoch ist es theoretisch möäglich den Speicherbereich des Kernels zu überschreiben und so  Fehlermeldungen und Interrupts verursachen.
+Würde man rechenaufwendige Prozeduren in Bare-Metal programmieren währen diese sehr viel schneller, da alle Systemressourcen verwendet werden können, während man beim Betriebssystem Switching betreiben muss. 
 
 # Aufgabe 2
 
