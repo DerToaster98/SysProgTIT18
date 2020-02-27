@@ -662,7 +662,7 @@ show_led_brown:
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
-@step_delay: @ TODO implement with hardware timer
+step_delay: @ TODO implement with hardware timer
         push {r1, r2, lr}
         mov r2, #0xFF00
         orr r2, #0x00FF   @ r2: When to show counter
@@ -676,23 +676,27 @@ step_delay_loop:
         pop {r1, r2, pc}
 
 
-step_delay:
+@step_delay:
         @hardware timer offset: IRQREG
-        push {r1, lr}
-        mov r1, [IRQREG, #0x4]
-        cmp r1, #0xFFEFFFFF
+        push {r1, r2, lr}
+        ldr r1, [IRQREG, #0x4]
+        mov r2, #0xFFFFFFFF
+        sub r2, r2, #0x00100000
+        cmp r1, r2
         bge step_delay_low
         add r1, #0x00100000
 step_delay_high:
-        cmp r1, [IRQREG, #0x4]
+        ldr r2, [IRQREG, #0x4]
+        cmp r1, r2
         blt step_delay_high
-        pop {r1, pc}
+        pop {r1, r2, pc}
 step_delay_low:
-        moveq r1, [IRQREG, #0x8]
+        ldreq r1, [IRQREG, #0x8]
 step_delay_low_loop:
-        cmp r1, [IRQREG, #0x8]
+        ldr r2, [IRQREG, #0x8]
+        cmp r1, r2
         blt step_delay_low_loop
-        pop {r1, pc}
+        pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
 @ Advances the colour wheel until on of its magnets are detected by the hall
