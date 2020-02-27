@@ -45,19 +45,6 @@
         .equ    brown, 336
         .equ    orange, 0
 
-        @ Bits for the numbers on the seven segment display, they are already in the right order
-        @ TODO Perhaps discard of this
-        .equ       bits_nmbr_0, 0x77        @01110111
-        .equ       bits_nmbr_1, 0x6         @00000110
-        .equ       bits_nmbr_2, 0x5B       @01011011
-        .equ       bits_nmbr_3, 0x4F       @01001111
-        .equ       bits_nmbr_4, 0x66       @01100110
-        .equ       bits_nmbr_5, 0x6D       @01101101
-        .equ       bits_nmbr_6, 0x7D       @01111101
-        .equ       bits_nmbr_7, 0x7       @00000111
-        .equ       bits_nmbr_8, 0x7F       @01111111
-        .equ       bits_nmbr_9, 0x67       @01100111
-
         @ Offsets to GPIOREG
         .equ       set_pin_out, 0x1C
         .equ       clear_pin_out, 0x28
@@ -107,16 +94,16 @@ mm_counter:             @ Holds the amount of counted M&Ms since the last activa
         .word         0
 
 segment_pattern:        @ : int array; Bitpatterns for each digit to be displayed on the 7 segment display
-        .word   2_11101110       @ 0
-        .word   2_01100000       @ 1
-        .word   2_11011010       @ 2
-        .word   2_11110010       @ 3
-        .word   2_01100110       @ 4
-        .word   2_10110110       @ 5
-        .word   2_10111110       @ 6
-        .word   2_11100000       @ 7
-        .word   2_11111110       @ 8
-        .word   2_11100110       @ 9
+        .word   0xEE    @ 2_11101110       @ 0
+        .word   0x60    @ 2_01100000       @ 1
+        .word   0xDA    @ 2_11011010       @ 2
+        .word   0xF2    @ 2_11110010       @ 3
+        .word   0x66    @ 2_01100110       @ 4
+        .word   0xB6    @ 2_10110110       @ 5
+        .word   0xBE    @ 2_10111110       @ 6
+        .word   0xE0    @ 2_11100000       @ 7
+        .word   0xFE    @ 2_11111110       @ 8
+        .word   0xE6    @ 2_11100110       @ 9
 
 @ - END OF DATA SECTION @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -278,7 +265,7 @@ hw_init:
 
         bl init_gpio
 
-        bl init_interrupt
+        @bl init_interrupt  @ Commented out
 
         bl init_outlet
 
@@ -304,15 +291,11 @@ mainloop:
         push {r1, r2, lr}
         mov r1, #0x00080000        @ r1: Feeder bit
 mainloop_loop:
-        ldr r2, [GPIOREG, pin_level]  @ Read the Pin Level Registry
-        tst r2, #0x100     @ Bit 8 is set, --> button not pressed
-        beq mainloop_exit         @ if button pressed, exit TODO Verify
-
         str r1, [GPIOREG, #set_pin_out]  @ Turn on feeder
         mov RETREG, #0xFF000000   @ If colour is NA, r6 is left unchanged, thus NA = 0xFF000000
 mainloop_fetch_mm:
         bl get_colour
-        cmp RETREG, #0xFF000000
+        cmp RETREG, #0xFF000000   @ If colour == NA : advance_colourwheel, continue; else: exit
         bne mainloop_fetch_mm_end
         bl advance_colourwheel
         b mainloop_fetch_mm
@@ -320,14 +303,16 @@ mainloop_fetch_mm_end:
         str r1, [GPIOREG, #clear_pin_out]  @ Turn off feeder
 
         mov r1, RETREG            @ r1: Colour
-        bl show_led               @ TODO Verify colour
-        bl move_snorkel_colour    @ TODO Verify colour
+        bl show_led               
+        bl move_snorkel_colour
 
         bl advance_colourwheel    @ Cause M&M to fall out
 
         bl increment_counter
 
-        b mainloop_loop
+        ldr r2, [GPIOREG, #pin_level]  @ Read the Pin Level Registry
+        tst r2, #0x100     @ Bit 8 is set, --> button not pressed
+        bne mainloop_loop @ if not taster.isPressed : continue
 
 mainloop_exit:
         pop {r1, r2, pc}
@@ -390,7 +375,7 @@ init_gpio:
 @ -----------------------------------------------------------------------------
 
 wait_button_start:
-        ldr r2, [GPIOREG, pin_level]  @ Read the Pin Level Registry
+        ldr r2, [GPIOREG, #pin_level]  @ Read the Pin Level Registry
         tst r2, #0x100     @ Bit 8 is set, --> button not pressed
         bne wait_button_start
         bx lr
@@ -425,7 +410,7 @@ init_outlet: @ TODO Centre properly
         mov r1, #1                
 
 init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do turn
-        ldr r2, [GPIOREG, pin_level]  @ Read outlet hall sensor state
+        ldr r2, [GPIOREG, #pin_level]  @ Read outlet hall sensor state
         tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         beq init_outlet_loop_while_detected @ if detected, move to next loop
         bl move_outlet_steps    @ Hall sensor doesn't detect outlet
@@ -433,7 +418,7 @@ init_outlet_loop_until_detected:  @ while !outlet.detected_by(hall_sensor) do tu
 
 init_outlet_loop_while_detected:  @ while outlet.detected_by(hall_sensor) do turn 
                                   @ (ensures the outlet is on the edge of the sensors detection range)
-        ldr r2, [GPIOREG, pin_level]  @ Read outlet hall sensor state
+        ldr r2, [GPIOREG, #pin_level]  @ Read outlet hall sensor state
         tst r2, #0x00200000       @ Bit 21 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne init_outlet_exit      @ if not detected any more, exit
         bl move_outlet_steps      @ Hall sensor detects outlet
@@ -445,11 +430,11 @@ init_outlet_exit:
 
 
 init_leds:
-        push {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, lr}
+        push {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, lr}
 
         bl WS2812RPi_Init
 
-        mov r0, #100
+        mov r0, #50
         bl WS2812RPi_SetBrightness
 
         mov r0, #1                @ Sets orange LED (ifm-orange)
@@ -489,8 +474,8 @@ init_leds:
         bl WS2812RPi_SetSingle
 
         bl WS2812RPi_Show
-        bl init_gpio              @ Don't trust the library
-        pop {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, pc}
+        @bl init_gpio              @ Don't trust the library  Commented out
+        pop {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, pc}
 
 
 @ -----------------------------------------------------------------------------
@@ -550,24 +535,26 @@ move_snorkel_colour_end:
 @   return:    The colour as defined above
 @ -----------------------------------------------------------------------------
 get_colour:
-        ldr  r1,[GPIOREG, pin_level]
-        tst  r1,#0x0400000    @Is colour red?
-        bne colour_red         @ TODO Verify
+        ldr  r1,[GPIOREG, #pin_level]
+        and r1, r1, #0x01C000000
 
-        tst  r1,#0x0800000    @Is colour green?
-        bne colour_green
+        cmp r1, #0x00400000     @Is colour red?
+        beq colour_red
 
-        tst  r1,#0x0C00000    @Is colour blue?
-        bne  colour_blue
+        cmp r1, #0x00800000    @Is colour green?
+        beq colour_green
 
-        tst  r1,#0x1000000    @Is colour brown?
-        bne  colour_brown
+        cmp r1, #0x00C00000    @Is colour blue?
+        beq colour_blue
 
-        tst  r1,#0x1400000    @Is colour orange?
-        bne  colour_orange
+        cmp r1, #0x01000000    @Is colour brown?
+        beq colour_brown
 
-        tst  r1,#0x1800000    @Is colour yellow?
-        bne colour_yellow
+        cmp r1, #0x01400000    @Is colour orange?
+        beq colour_orange
+
+        cmp r1, #0x01800000    @Is colour yellow?
+        beq colour_yellow
 
         bx lr
 
@@ -597,7 +584,7 @@ colour_red:
 @   return:    none
 @ -----------------------------------------------------------------------------
 show_led:
-        push {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, lr}
+        push {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, lr}
         cmp r1, #orange
         beq show_led_orange
         cmp r1, #yellow
@@ -614,8 +601,8 @@ show_led:
 
 show_led_exit:
         bl WS2812RPi_Show
-        bl init_gpio              @ Don't trust the library
-        pop {r0, r1, r2, r3, SNORKEL, GPIOREG, RETREG, pc}
+        @bl init_gpio              @ Don't trust the library    Commented out
+        pop {r0, r1, r2, r3, SNORKEL, RETREG, GPIOREG, pc}
    
 show_led_orange:
         mov r0, #1
@@ -654,11 +641,13 @@ show_led_brown:
 @ -----------------------------------------------------------------------------
 step_delay: @ TODO implement with hardware timer
         push {r1, r2, lr}
+        mov r2, #0xFF00
+        orr r2, #0x00FF   @ r2: When to show counter
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
 step_delay_loop:
         add r1, #1
-        tst r1, #0xFFFF
-        bleq show_number @ Do every 0x10000th cycle
+        @tst r1, r2
+        @bleq show_counter @ Do every 0x10000th cycle  Commented out
         cmp r1, #0x200000
         blt step_delay_loop
         pop {r1, r2, pc}
@@ -687,8 +676,8 @@ step_delay_loop:
 @   return:    none
 @ -----------------------------------------------------------------------------
 advance_colourwheel: @ TODO Centre properly
-        push {r1, r2, lr}         @ for (int i = 0; i < 200 || sensor == 1; ++i)
-       mov r1, #0                @ r1: i
+        push {r1, r2, r3, lr}         @ for (int i = 0; i < 200 || sensor == 1; ++i)
+        mov r1, #0                @ r1: i
         mov r2, #0x00002000       @ Bit to toggle for step motor
 
 advance_colourwheel_loop:
@@ -699,10 +688,10 @@ advance_colourwheel_loop:
         add r1, #1                @ ++i
         cmp r1, #200              @ if i < 200 continue, else check if hall sensor detects
         blt advance_colourwheel_loop
-        ldr r3, [GPIOREG, pin_level]  @ Read outlet hall sensor state
+        ldr r3, [GPIOREG, #pin_level]  @ Read outlet hall sensor state
         tst r3, #0x00100000       @ Bit 20 is set, if the outlet isn't in front of the sensor (Z = 0)
         bne advance_colourwheel_loop    @ Hall sensor doesn't detect outlet TODO Verify
-        pop {r1, r2, pc}
+        pop {r1, r2, r3, pc}
 
 @ -----------------------------------------------------------------------------
 @ Turns off stuff that needs turning off
@@ -765,7 +754,7 @@ increment_counter:
         push {r1, r2, r3, r4, r5, lr}
         ldr r2, =mm_counter     @ r2: &counter
         ldr r1, [r2]            @ r1: counter (BCD)
-        and r3, r1, #xF         @ r3: counter digit
+        and r3, r1, #0xF         @ r3: counter digit
         mov r4, #0              @ r4: digit position in r1
 
 increment_counter_loop:         @ while r3 >= 9 : set r3 = 0, set r1[r4] = r3, set r3 = r1[++r4]
@@ -796,7 +785,7 @@ increment_counter_loop_end:     @ if r4 >= 5thdigit : set r1 = 0; else : r1[r4] 
         mov r5, #0xF
         lsl r5, r4
         neg r5, r5
-        and r1, r1, r5          @ First clear the digits bits, the orr the new digit onto it
+        and r1, r1, r5          @ First clear the digits bits, then orr the new digit onto it
         orr r1, r1, r3
         b increment_counter_end
 
@@ -823,7 +812,7 @@ show_counter:
         pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
-@ Displays the provided number on the 7-Segment display
+@ Displays the provided BCD 4-digit number on the 7-Segment display
 @   param:     r1 -> The number to display
 @   return:    none
 @ ----------------------------------------------------------------------------
@@ -837,7 +826,7 @@ show_numer_loop:                        @ for (int i = 0; i < 4; ++i)
 
         mov r3, r1
         and r3, #0xF                    @ r3: digit[i]
-        ldr r3, [r2, r3]                @ r3: segment_pattern[digit[i]]
+        ldr r3, [r2, r3]                @ r3: segment_pattern[digit[i]]    TODO Verify
 
         push {r1, r2}
         mov r1, r3                      @ Param1: Bitpattern
@@ -881,6 +870,7 @@ print_digit_loop:               @ for (int i = 0; i < 8; ++i)
         str r4, [GPIOREG, #set_pin_out] @ Rising edge -> Store bit
 
         lsr r1, #1              @ Next bit
+        add r3, #1
         b print_digit_loop
 
 print_digit_loop_end:
