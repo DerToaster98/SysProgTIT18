@@ -65,3 +65,7 @@ Eine Kombination aus der WLAN-Benutzung und Debugging. Durch einfacheres Debuggi
 
 ### - WLAN (Remote execution):
 Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen und so Zeit beim Debuggen sparen. Natürlich bietet das Benutzen der WLAN-Schnittstelle auch einige Schwierigkeiten, die allerdings überschaubar sind.
+
+## Aufgabe 2.2
+
+![](diagrams\export\Programmablauf_init.png)
