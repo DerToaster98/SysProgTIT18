@@ -1,10 +1,11 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @@@     main.s
 @@@ ---------------------------------------------------------------------------
-@@@     author:  Lisa Binkert, Nikolai Klatt, Samuel Rundel, Oliver Seiler, Patrick Sewell
+@@@     authors: Lisa Binkert, Nikolai Klatt, Samuel Rundel, Oliver Seiler,
+@@@              Patrick Sewell
 @@@     target:  Raspberry Pi
 @@@     project: MM-Sorting-Machine
-@@@     date:    2020/02/20
+@@@     date:    2020/02/27
 @@@     version: 0.1
 @@@ ---------------------------------------------------------------------------
 @@@ This program controls the MM-Sorting-Machine by reading two inputs,
@@ -36,6 +37,7 @@
         .equ      DEVICE_ARG,4                @ device address
         .equ      STACK_ARGS,8                @ sp already 8-byte aligned
 
+        @ Positions of the respective colours. To be used with enum semantics in the code below
         .equ    yellow, 67
         .equ    green, 134
         .equ    blue, 200
@@ -43,26 +45,28 @@
         .equ    brown, 336
         .equ    orange, 0
 
-              @Bits for the numbers on the seven segment display, they are already in the right order
-         .equ       bits_nmbr_0, 0x77        @01110111
-         .equ       bits_nmbr_1, 0x6         @00000110
-         .equ       bits_nmbr_2, 0x5B       @01011011
-         .equ       bits_nmbr_3, 0x4F       @01001111
-         .equ       bits_nmbr_4, 0x66       @01100110
-         .equ       bits_nmbr_5, 0x6D       @01101101
-         .equ       bits_nmbr_6, 0x7D       @01111101
-         .equ       bits_nmbr_7, 0x7       @00000111
-         .equ       bits_nmbr_8, 0x7F       @01111111
-         .equ       bits_nmbr_9, 0x67       @01100111
+        @ Bits for the numbers on the seven segment display, they are already in the right order
+        @ TODO Perhaps discard of this
+        .equ       bits_nmbr_0, 0x77        @01110111
+        .equ       bits_nmbr_1, 0x6         @00000110
+        .equ       bits_nmbr_2, 0x5B       @01011011
+        .equ       bits_nmbr_3, 0x4F       @01001111
+        .equ       bits_nmbr_4, 0x66       @01100110
+        .equ       bits_nmbr_5, 0x6D       @01101101
+        .equ       bits_nmbr_6, 0x7D       @01111101
+        .equ       bits_nmbr_7, 0x7       @00000111
+        .equ       bits_nmbr_8, 0x7F       @01111111
+        .equ       bits_nmbr_9, 0x67       @01100111
 
-         .equ       set_pin_out, 0x1C
-         .equ       clear_pin_out, 0x28
-         .equ       pin_level, 0x34
+        @ Offsets to GPIOREG
+        .equ       set_pin_out, 0x1C
+        .equ       clear_pin_out, 0x28
+        .equ       pin_level, 0x34
 
 SNORKEL .req      r4
 TMPREG  .req      r5
 RETREG  .req      r6
-IRQREG       .req         r7
+IRQREG  .req      r7
 WAITREG .req      r8
 RLDREG  .req      r9
 GPIOREG .req      r10
@@ -99,9 +103,10 @@ timerir_mmap_adr:
 timerir_mmap_fd:
         .word     0
 
-mm_counter:
-              .word         0
-segment_pattern:
+mm_counter:             @ Holds the amount of counted M&Ms since the last activation
+        .word         0
+
+segment_pattern:        @ : int array; Bitpatterns for each digit to be displayed on the 7 segment display
         .word   2_11101110       @ 0
         .word   2_01100000       @ 1
         .word   2_11011010       @ 2
@@ -275,6 +280,8 @@ hw_init:
         bl init_leds
 
         bl wait_button_start
+
+        bl turn_on_counter
 
         bl mainloop
 
@@ -704,8 +711,43 @@ turn_off:
         str r1, [GPIOREG, #clear_pin_out] @ Write to Reset-GPIO register
 
         bl WS2812RPi_DeInit
+        bl turn_off_counter
         
         pop {r1, pc}
+
+
+@ --------------------------------------------------------------------------------------------------------------------
+@
+@ 7 SEGMENT DISPLAY
+@
+@ --------------------------------------------------------------------------------------------------------------------
+
+        @ Segment '1' is the far left segment
+        @ Parse counter and set the segments
+        @ Bit values for things:
+        @ 0: 0-1-1-1-0-1-1-1
+        @ 1: 0-0-0-0-0-1-1-0
+        @ 2: 0-1-0-1-1-0-1-1
+        @ 3: 0-1-0-0-1-1-1-1
+        @ 4: 0-1-1-0-0-1-1-0
+        @ 5: 0-1-1-0-1-1-0-1
+        @ 6: 0-1-1-1-1-1-0-1
+        @ 7: 0-0-0-0-0-1-1-1
+        @ 8: 0-1-1-1-1-1-1-1
+        @ 9: 0-1-1-0-0-1-1-1
+        @ A und B setzen
+
+        @ nSRCLR auf HIGH setzen -> Warten auf Werte
+
+        @ Push bits into register according to the wished number
+                @ SER set to the bits value
+
+                @ SRCLK rising edge to confirm the value and to push
+
+        @ RCLK rising edge to confirm bits
+
+        @ nSRCLK set to low again so it knows we are done
+
 
 @ -----------------------------------------------------------------------------
 @ Increments the 7 segment display and shows the number
@@ -842,44 +884,38 @@ print_digit_loop_end:
         pop {r1, r2, r3, r4, r5, pc}
 
 @ -----------------------------------------------------------------------------
-@ Sets counter to 0
+@ Causes segment-display to not display anything
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
 turn_off_counter:
-              @ TODO: Reset counter to 0
+        push {r1, r2, lr}
+
+        mov r1, #0      @ r1: Bitpattern (nothing);
+        mov r2, #0      @ r2: Segment address (0 - 3)
+        bl print_digit
+        add r2, #1
+        bl print_digit
+        add r2, #2
+        bl print_digit
+        add r2, #3
+        bl print_digit
+
+        pop {r1, r2, pc}
 
 @ -----------------------------------------------------------------------------
-@ Initializes counter and number display and displays the current number
+@ Initializes counter and number display and displays the number (0 at first)
 @   param:     none
 @   return:    none
 @ -----------------------------------------------------------------------------
 turn_on_counter:
-              @ Segment '1' is the far left segment
-              @ Parse counter and set the segments
-              @ Bit values for things:
-              @ 0: 0-1-1-1-0-1-1-1
-              @ 1: 0-0-0-0-0-1-1-0
-              @ 2: 0-1-0-1-1-0-1-1
-              @ 3: 0-1-0-0-1-1-1-1
-              @ 4: 0-1-1-0-0-1-1-0
-              @ 5: 0-1-1-0-1-1-0-1
-              @ 6: 0-1-1-1-1-1-0-1
-              @ 7: 0-0-0-0-0-1-1-1
-              @ 8: 0-1-1-1-1-1-1-1
-              @ 9: 0-1-1-0-0-1-1-1
-              @ A und B setzen
+        push {r1, r2, lr}
+        ldr r2, =mm_counter     @ r2: &counter
+        mov r1, #0              @ r1: counter
+        str r1, [r2]
+        bl show_number
+        pop {r1, r2, pc}
 
-              @ nSRCLR auf HIGH setzen -> Warten auf Werte
-
-              @ Push bits into register according to the wished number
-                     @ SER set to the bits value
-
-                     @ SRCLK rising edge to confirm the value and to push
-
-              @ RCLK rising edge to confirm bits
-
-              @ nSRCLK set to low again so it knows we are done
 
 
 @ --------------------------------------------------------------------------------------------------------------------
