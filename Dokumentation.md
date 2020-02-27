@@ -68,4 +68,4 @@ Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen
 
 ## Aufgabe 2.2
 
-![](diagrams\export\Programmablauf_init.png)
+![](diagrams/export/Programmablauf_init.png)
