@@ -83,11 +83,11 @@ Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen
 ### Programmablauf der Funktion increment_counter
 ![](diagrams/export/Programmablauf_increment_counter.png)
 
-### Programmablauf der Funktion increment_counter
+### Programmablauf der Funktion move_outlet_steps
 ![](diagrams/export/Programmablauf_move_outlet_steps.png)
 
-### Programmablauf der Funktion increment_counter
+### Programmablauf der Funktion move_snorkel_color
 ![](diagrams/export/Programmablauf_move_snorkel_color.png)
 
-### Programmablauf der Funktion increment_counter
+### Programmablauf der Funktion print_digit
 ![](diagrams/export/Programmablauf_print_digit.png)
