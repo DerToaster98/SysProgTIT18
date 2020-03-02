@@ -664,19 +664,19 @@ show_led_brown:
 @ -----------------------------------------------------------------------------
 step_delay: @ TODO implement with hardware timer
         push {r1, r2, lr}
-        mov r2, #0xFF00
-        orr r2, #0x00FF   @ r2: When to show counter
+        @mov r2, #0xFF00 Commented out
+        @orr r2, #0x00FF   @ r2: When to show counter
         mov r1, #0  @ for (int i = 0; i > 0x2D0000; --i)
 step_delay_loop:
         add r1, #1
         @tst r1, r2
         @bleq show_counter @ Do every 0x10000th cycle  Commented out
-        cmp r1, #0x100000
+        cmp r1, #0x100000  @ Loop cycles to wait
         blt step_delay_loop
         pop {r1, r2, pc}
 
 
-@step_delay:
+@step_delay:   @ Delay using HW-Timer  Commented out
         @hardware timer offset: IRQREG
         push {r1, r2, lr}
         ldr r1, [IRQREG, #0x4]
@@ -736,7 +736,7 @@ turn_off:
         str r1, [GPIOREG, #clear_pin_out] @ Write to Reset-GPIO register
 
         bl WS2812RPi_DeInit
-        bl turn_off_counter
+        @bl turn_off_counter  Commented out
         
         pop {r1, pc}
 
