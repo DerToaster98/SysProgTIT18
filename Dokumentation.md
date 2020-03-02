@@ -79,3 +79,15 @@ Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen
 
 ### Programmablauf der Funktion advance_colorwheel
 ![](diagrams/export/Programmablauf_advance_colorwheel.png)
+
+### Programmablauf der Funktion increment_counter
+![](diagrams/export/Programmablauf_increment_counter.png)
+
+### Programmablauf der Funktion increment_counter
+![](diagrams/export/Programmablauf_move_outlet_steps.png)
+
+### Programmablauf der Funktion increment_counter
+![](diagrams/export/Programmablauf_move_snorkel_color.png)
+
+### Programmablauf der Funktion increment_counter
+![](diagrams/export/Programmablauf_print_digit.png)
