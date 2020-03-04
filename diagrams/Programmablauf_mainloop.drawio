@@ -1,4 +1,4 @@
-<mxfile host="www.draw.io" modified="2020-03-04T14:47:37.694Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0" etag="yVlWjnNvWgwWfB5qmq2P" version="12.7.9" type="github">
+<mxfile host="www.draw.io" modified="2020-03-04T14:48:19.902Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0" etag="5ucjB275l0UoFJ4ruTQv" version="12.7.9" type="github">
   <diagram id="k4cw5h_0fVER-fqyHs3r" name="Seite-1">
     <mxGraphModel dx="1408" dy="1966" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -23,8 +23,16 @@
         <mxCell id="hY-MnW-EoitDarra9r_p-20" value="read Pin Level Register" style="rounded=1;whiteSpace=wrap;html=1;gradientColor=#7ea6e0;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="520" y="840" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="hY-MnW-EoitDarra9r_p-27" value="no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="hY-MnW-EoitDarra9r_p-22" target="hY-MnW-EoitDarra9r_p-26" edge="1">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="hY-MnW-EoitDarra9r_p-27" value="no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="hY-MnW-EoitDarra9r_p-22" target="_sODZMTpV888g5sVHCmp-1" edge="1">
+          <mxGeometry x="-0.9267" relative="1" as="geometry">
+            <mxPoint x="580" y="1100" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="580" y="1080" />
+              <mxPoint x="200" y="1080" />
+              <mxPoint x="200" y="-30" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="Ijgg2MWexYn2Fw6oENN2-9" value="yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="hY-MnW-EoitDarra9r_p-22" edge="1">
           <mxGeometry x="0.1053" relative="1" as="geometry">
@@ -37,9 +45,6 @@
         </mxCell>
         <mxCell id="hY-MnW-EoitDarra9r_p-22" value="Is Button pressed?&lt;br&gt;(Bit 8)" style="rhombus;whiteSpace=wrap;html=1;gradientColor=#ffd966;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
           <mxGeometry x="510" y="930" width="140" height="130" as="geometry" />
-        </mxCell>
-        <mxCell id="hY-MnW-EoitDarra9r_p-26" value="Turn on feeder" style="rounded=1;whiteSpace=wrap;html=1;gradientColor=#7ea6e0;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
-          <mxGeometry x="520" y="1100" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="hY-MnW-EoitDarra9r_p-30" value="mainloop_fetch_mm" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;gradientColor=#ea6b66;" parent="1" vertex="1">
           <mxGeometry x="331.43" y="150" width="110" height="20" as="geometry" />
