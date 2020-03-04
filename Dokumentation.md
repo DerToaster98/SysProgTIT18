@@ -21,7 +21,7 @@ start.elf ausführen --> config.txt, cmdline.txt und bcm2835.dtb werden gelesen 
 - Stage 5:
 kernel.img wird auf den ARM geladen und dort ausgeführt
 
-*Bis Kernel.img auf dem ARM ausgeführt wird, läuft alles auf der GPU!*
+*Bis kernel.img auf dem ARM ausgeführt wird, läuft alles auf der GPU!*
 
 Das folgende Diagramm liefert einen detaillierteren Einblick:
 
