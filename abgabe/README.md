@@ -1,5 +1,7 @@
 # Abgabedateien
 
+Gruppe: Lisa Binkert, Nikolai Klatt, Samuel Rundel, Oliver Seiler, Patrick Sewell
+
 ## Quellcode
 
 `main.s`
