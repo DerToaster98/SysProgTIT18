@@ -68,6 +68,11 @@ Durch den Wegfall der SD-Karte kann man Änderungen am Code schneller einpflegen
 
 ## Aufgabe 2.2
 
+### Grundsätzlicher Programmablauf / Bedienung
+
+Nach dem Programmstart bewegt sich das Outlet in eine bekannte Position. Anschließend wird gewartet bis der rechte Taster gedrückt wird. Der Druck des Tasters startet der Sortiervorgang. Das Programm kann nach jedem Sortieren ordentlich beim Ende eines jeden Soritervorgangs durch Tasterdruck beendet werden. Dazu muss der Taster betätigt werden, sobald sich das Colourwheel beim Auswurf des sortierten M&Ms aufhört zu drehen.
+Ein Sortiervorgang hat den folgenden Ablauf: Der Feeder wird aktiviert und das Colourwheel jeweils um 90° gedreht, solange der Farbsensor keine Farbe erkennt. Sobald eine Farbe erkannt wird, wird nur die LED mit der entsprechenden Farbe eingeschaltet, sowie das Outlet an die entsprechende Position bewegt. Anschließend wird das Colourwheel um eine Viertelumdrehung gedreht, um das M&M auszuwerfen.
+
 ### Programmablauf der Funktion hw_init
 ![](diagrams/export/Programmablauf_init.png)
 
